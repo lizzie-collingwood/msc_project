@@ -99,9 +99,11 @@ eqn = (
     fd.inner(v, u1 - u0)*dx + dT*fd.inner(v, q1*perp(F1))*dx
     - dT*fd.div(v)*(g*(hh + b) + K)*dx
     + phi*(h1 - h0 + dT*fd.div(F1))*dx
-    #+ fd.div(v)*gamma*(h1 - h0 + dT*fd.div(F1))*dx
     + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
+    + gamma*fd.div(w)*(h1 - h0 + dT*fd.div(F1))*dx
+    + fd.inner(w, u1 - u0)*dx + dT*fd.inner(w, q1*perp(F1))*dx
+    - dT*fd.div(w)*(g*(hh + b) + K)*dx
     )
 
 
@@ -140,9 +142,9 @@ sparameters = {
     "pc_fieldsplit_off_diag_use_amat": True,
     "pc_fieldsplit_0_fields": '0,2,3',
     "pc_fieldsplit_1_fields": '1',
-    "fieldsplit_0_ksp_type": 'gmres',
-    "fieldsplit_0_ksp_max_it": 3,
-    "fieldsplit_0_ksp_monitor": None,
+    "fieldsplit_0_ksp_type": 'preonly',
+    #"fieldsplit_0_ksp_max_it": 3,
+    #"fieldsplit_0_ksp_monitor": None,
     "fieldsplit_0_pc_type": 'python',
     'fieldsplit_0_pc_python_type': 'firedrake.PatchPC',
     "fieldsplit_0_patch_pc_patch_save_operators": True,
@@ -164,8 +166,8 @@ sparameters = {
 sparameters_lu = {
     "mat_type":"matfree",
     'snes_monitor': None,
-    "ksp_type": "fgmres",
-    "ksp_view": None,
+    "ksp_type": "gmres",
+    #"ksp_view": None,
     "ksp_gmres_modifiedgramschmidt": None,
     'ksp_monitor': None,
     "pc_type": "fieldsplit",
@@ -175,12 +177,14 @@ sparameters_lu = {
     "pc_fieldsplit_0_fields": '0,2,3',
     "pc_fieldsplit_1_fields": '1',
     "fieldsplit_0_ksp_type": 'preonly',
+    #"fieldsplit_0_ksp_monitor": None,
     "fieldsplit_0_pc_type": 'python',
     "fieldsplit_0_pc_python_type": 'firedrake.AssembledPC',
     "fieldsplit_0_assembled_mat_type":"aij",
     "fieldsplit_0_assembled_pc_type":"lu",
     "fieldsplit_0_assembled_pc_factor_mat_solver_type":"mumps",
-    "fieldsplit_1_ksp_type": 'gmres',
+    "fieldsplit_1_ksp_type": 'preonly',
+    #"fieldsplit_1_ksp_monitor": None,
     "fieldsplit_1_ksp_max_it": 3,
     "fieldsplit_1_pc_type": 'python',
     "fieldsplit_1_pc_python_type": 'firedrake.MassInvPC',
@@ -199,7 +203,7 @@ ctx = {"mu":g*dt/gamma/2}
 
 #ctx = {}
 nsolver = fd.NonlinearVariationalSolver(nprob,
-                                        solver_parameters=solver_dict,
+                                        solver_parameters=sparameters_lu,
                                         appctx=ctx)# FIXME: put dict here
 dmax = args.dmax
 hmax = 24*dmax
