@@ -93,16 +93,15 @@ def both(u):
 
 K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
-gamma = fd.Constant(1e3)
 
 
 eqn = (
     fd.inner(v, u1 - u0)*dx + dT*fd.inner(v, q1*perp(F1))*dx
     - dT*fd.div(v)*(g*(hh + b) + K)*dx
     + phi*(h1 - h0 + dT*fd.div(F1))*dx
-    + fd.div(v)*gamma*(h1 - h0 + dT*fd.div(F1))*dx
+    #+ fd.div(v)*gamma*(h1 - h0 + dT*fd.div(F1))*dx
     + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-    + fd.inner(v, F1 - hh*uh)*dx
+    + fd.inner(w, F1 - hh*uh)*dx
     )
 
 
@@ -123,17 +122,10 @@ eqn = (
 
 solver_dict = {
     'mat_type':'aij',
+    'snes_monitor':None,
     'ksp_type':'preonly',
     'pc_type':'lu',
     'pc_factor_mat_solve_type':'mumps'
-}
-
-solver_dict_gmres = {
-    'mat_type':'aij',
-    'ksp_type':'gmres',
-    'ksp_monitor':None,
-    'pc_type':'none',
-    # 'pc_factor_mat_solve_type':'mumps'
 }
 
 sparameters = {
@@ -142,34 +134,60 @@ sparameters = {
     "ksp_type": "fgmres",
     "ksp_gmres_modifiedgramschmidt": None,
     'ksp_monitor': None,
-    #'snes_converged_reason': None,
-    #'ksp_converged_reason': None,
-    #'ksp_view': None,
-    #"ksp_rtol": 1e-5,
     "pc_type": "fieldsplit", # TODO: petsc manual about this
     "pc_fieldsplit_type": "schur",
     "pc_fieldsplit_schur_fact_type": "full",
     "pc_fieldsplit_off_diag_use_amat": True,
     "pc_fieldsplit_0_fields": '0,2,3',
     "pc_fieldsplit_1_fields": '1',
-    "pc_fieldsplit_0_ksp_type": 'gmres',
-    "pc_fieldsplit_0_ksp_max_it": 3,
-    "pc_fieldsplit_0_pc_type": 'python',
-    'pc_fieldsplit_0_pc_python_type': 'firedrake.PatchPC',
-    "pc_fieldsplit_0_patch_pc_patch_save_operators": True,
-    "pc_fieldsplit_0_patch_pc_patch_partition_of_unity": False,
-    "pc_fieldsplit_0_patch_pc_patch_sub_mat_type": "seqaij",
-    "pc_fieldsplit_0_patch_pc_patch_construct_type": "star",
-    "pc_fieldsplit_0_patch_pc_patch_multiplicative": False,
-    "pc_fieldsplit_0_patch_pc_patch_symmetrise_sweep": False,
-    "pc_fieldsplit_0_patch_pc_patch_construct_dim": 0,
-    "pc_fieldsplit_0_patch_sub_ksp_type": "preonly",
-    "pc_fieldsplit_0_patch_sub_pc_type": "lu",
-    "pc_fieldsplit_1_ksp_type": 'preonly',
-    "pc_fieldsplit_1_pc_type": 'python',
-    "pc_fieldsplit_1_pc_python_type": 'firedrake.MassInvPC',
-    "pc_fieldsplit_1_Mp_pc_type": 'ilu',
+    "fieldsplit_0_ksp_type": 'gmres',
+    "fieldsplit_0_ksp_max_it": 3,
+    "fieldsplit_0_ksp_monitor": None,
+    "fieldsplit_0_pc_type": 'python',
+    'fieldsplit_0_pc_python_type': 'firedrake.PatchPC',
+    "fieldsplit_0_patch_pc_patch_save_operators": True,
+    "fieldsplit_0_patch_pc_patch_partition_of_unity": False,
+    "fieldsplit_0_patch_pc_patch_sub_mat_type": "seqaij",
+    "fieldsplit_0_patch_pc_patch_construct_type": "star",
+    "fieldsplit_0_patch_pc_patch_multiplicative": False,
+    "fieldsplit_0_patch_pc_patch_symmetrise_sweep": False,
+    "fieldsplit_0_patch_pc_patch_construct_dim": 0,
+    "fieldsplit_0_patch_sub_ksp_type": "preonly",
+    "fieldsplit_0_patch_sub_pc_type": "lu",
+    'fieldsplit_0_patch_sub_pc_factor_mat_solve_type':'mumps',
+    "fieldsplit_1_ksp_type": 'preonly',
+    "fieldsplit_1_pc_type": 'python',
+    "fieldsplit_1_pc_python_type": 'firedrake.MassInvPC',
+    "fieldsplit_1_Mp_pc_type": 'ilu',
 }
+
+sparameters_lu = {
+    "mat_type":"matfree",
+    'snes_monitor': None,
+    "ksp_type": "fgmres",
+    "ksp_view": None,
+    "ksp_gmres_modifiedgramschmidt": None,
+    'ksp_monitor': None,
+    "pc_type": "fieldsplit",
+    "pc_fieldsplit_type": "schur",
+    "pc_fieldsplit_schur_fact_type": "full",
+    "pc_fieldsplit_off_diag_use_amat": True,
+    "pc_fieldsplit_0_fields": '0,2,3',
+    "pc_fieldsplit_1_fields": '1',
+    "fieldsplit_0_ksp_type": 'preonly',
+    "fieldsplit_0_pc_type": 'python',
+    "fieldsplit_0_pc_python_type": 'firedrake.AssembledPC',
+    "fieldsplit_0_assembled_mat_type":"aij",
+    "fieldsplit_0_assembled_pc_type":"lu",
+    "fieldsplit_0_assembled_pc_factor_mat_solver_type":"mumps",
+    "fieldsplit_1_ksp_type": 'gmres',
+    "fieldsplit_1_ksp_max_it": 3,
+    "fieldsplit_1_pc_type": 'python',
+    "fieldsplit_1_pc_python_type": 'firedrake.MassInvPC',
+    "fieldsplit_1_Mp_ksp_type": 'preonly',
+    "fieldsplit_1_Mp_pc_type": 'lu',
+}
+
 
  
 dt = 60*60*args.dt
@@ -177,9 +195,11 @@ dT.assign(dt)
 t = 0.
 
 nprob = fd.NonlinearVariationalProblem(eqn, Unp1)
-ctx = {"mu": g*dt/gamma/2}
+ctx = {"mu":g*dt/gamma/2}
+
+#ctx = {}
 nsolver = fd.NonlinearVariationalSolver(nprob,
-                                        solver_parameters=sparameters,
+                                        solver_parameters=solver_dict,
                                         appctx=ctx)# FIXME: put dict here
 dmax = args.dmax
 hmax = 24*dmax
