@@ -231,7 +231,7 @@ ctx = {"mu":g*dt/gamma/2}
 
 #ctx = {}
 nsolver = fd.NonlinearVariationalSolver(nprob,
-                                        solver_parameters=solver_dict,
+                                        solver_parameters=sparameters,
                                         appctx=ctx)# FIXME: put dict here
 dmax = args.dmax
 hmax = 24*dmax
