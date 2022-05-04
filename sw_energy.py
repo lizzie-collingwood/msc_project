@@ -95,7 +95,7 @@ u0, h0, q0, F0 = fd.split(Un)
 u1, h1, q1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
 hh = 0.5*(h0 + h1)
-
+qh = 0.5*(q0 + q1)
 
 def both(u):
     return 2*fd.avg(u)
@@ -113,33 +113,51 @@ eqn = (
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
-def both(u):
-    return 2*fd.avg(u)
-
 dS = fd.dS
 n = fd.FacetNormal(mesh)
 
 def u_op(v, u, h):
-    Upwind = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
     K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(u))*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(u)))), u)*dx
             + fd.inner(both(perp(n)*fd.inner(v, perp(u))),
-                          both(Upwind*u))*dS
+                          fd.avg(u))*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
-
 def h_op(phi, u, h):
-    uup = 0.5 * (fd.dot(u, n) + abs(fd.dot(u, n)))
-    return (- fd.inner(fd.grad(phi), u)*h*dx
-            + fd.jump(phi)*(uup('+')*h('+')
-                            - uup('-')*h('-'))*dS)
+    return phi*fd.div(u*h)*dx
 
 p_eqn = (
     fd.inner(v, u1 - u0)*dx
     + dT*u_op(v, uh, hh)
     + phi*(h1 - h0)*dx
     + dT*h_op(phi, uh, hh)
+    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    + fd.inner(w, F1 - hh*uh)*dx
+    )
+
+p1_eqn = (
+    fd.inner(v, u1 - u0)*dx
+    + dT*u_op(v, uh, hh)
+    + phi*(h1 - h0)*dx
+    + phi*dT*fd.div(F1)*dx
+    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    + fd.inner(w, F1 - hh*uh)*dx
+    )
+
+def u_energy_op(v, u, F, h):
+    K = 0.5*fd.inner(u, u)
+    return (fd.inner(v, f*perp(F/h))*dx
+            - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
+            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))),
+                          fd.avg(u))*dS
+            - fd.div(v)*(g*(h + b) + K)*dx)
+
+p_vel_eqn = (
+    fd.inner(v, u1 - u0)*dx
+    + dT*u_op(v, uh, hh)
+    + phi*(h1 - h0)*dx
+    + phi*dT*fd.div(F1)*dx
     + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
@@ -193,23 +211,25 @@ block_parameters = {
     "snes_monitor": None,
     "mat_type": "matfree",
     "ksp_type": "fgmres",
-    "ksp_view": None,
+    #"ksp_view": None,
     "ksp_monitor_true_residual": None,
     "ksp_converged_reason": None,
     "ksp_atol": 1e-8,
     "ksp_rtol": 1e-8,
-    "ksp_max_it": 4,
+    "ksp_max_it": 20,
     "pc_type":"fieldsplit",
     "pc_fieldsplit_type": "schur",
     "pc_fieldsplit_schur_fact_type": "full",
     "pc_fieldsplit_off_diag_use_amat": True,
-    "pc_fieldsplit_0_fields": "2, 3",
-    "pc_fieldsplit_1_fields": "0, 1",
+    "pc_fieldsplit_0_fields": "2,3",
+    "pc_fieldsplit_1_fields": "0,1",
     "fieldsplit_0_ksp_type": "preonly",
     "fieldsplit_0_pc_type": "python",
     "fieldsplit_0_pc_python_type": "firedrake.AssembledPC",
     "fieldsplit_0_assembled_pc_type": "lu",
-    "fieldsplit_1_ksp_type": "preonly",
+    "fieldsplit_1_ksp_type": "gmres",
+    "fieldsplit_1_ksp_max_it": 2,
+    "fieldsplit_1_ksp_monitor": None,
     "fieldsplit_1_pc_type": "python",
     "fieldsplit_1_pc_python_type": "firedrake.AssembledPC",
     "fieldsplit_1_assembled_pc_type": "lu"
@@ -220,12 +240,14 @@ dt = 60*60*args.dt
 dT.assign(dt)
 t = 0.
 
-nprob = fd.NonlinearVariationalProblem(eqn, Unp1)#, Jp=J_p)
+nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)#, Jp=J_p)
 nsolver = fd.NonlinearVariationalSolver(nprob,
                                         solver_parameters=mg_parameters)
 vtransfer = transfer.ManifoldTransfer()
 tm = fd.TransferManager()
 transfers = {
+    V0.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
+                       vtransfer.inject),
     V1.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
                        vtransfer.inject),
     V2.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
