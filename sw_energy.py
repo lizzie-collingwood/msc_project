@@ -105,6 +105,12 @@ eqn = (
     )
 
 
+mass = h0*dx
+energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
+Q = h0*q0*dx
+Z = h0*q0**2*dx
+
+
 # U_t + N(U) = 0
 # IMPLICIT MIDPOINT
 # U^{n+1} - U^n + dt*N( (U^{n+1}+U^n)/2 ) = 0.
@@ -231,8 +237,8 @@ ctx = {"mu":g*dt/gamma/2}
 
 #ctx = {}
 nsolver = fd.NonlinearVariationalSolver(nprob,
-                                        solver_parameters=sparameters,
-                                        appctx=ctx)# FIXME: put dict here
+                                        solver_parameters=solver_dict,
+                                        appctx=ctx)
 dmax = args.dmax
 hmax = 24*dmax
 tmax = 60.*60.*hmax
@@ -291,6 +297,11 @@ while t < tmax + 0.5*dt:
 
     nsolver.solve()
     Un.assign(Unp1)
+
+    print("mass", fd.assemble(mass))
+    print("energy", fd.assemble(energy))
+    print("Q", fd.assemble(Q))
+    print("enstrophy", fd.assemble(Z))
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
