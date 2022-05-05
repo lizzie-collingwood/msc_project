@@ -107,8 +107,8 @@ eqn = (
 
 mass = h0*dx
 energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
-Q = h0*q0*dx
-Z = h0*q0**2*dx
+Q = hh*q1*dx
+Z = hh*q1**2*dx
 
 
 # U_t + N(U) = 0
@@ -296,12 +296,13 @@ while t < tmax + 0.5*dt:
     tdump += dt
 
     nsolver.solve()
-    Un.assign(Unp1)
 
     print("mass:", fd.assemble(mass))
     print("energy:", fd.assemble(energy))
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
+
+    Un.assign(Unp1)
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
