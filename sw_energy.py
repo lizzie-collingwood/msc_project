@@ -298,10 +298,10 @@ while t < tmax + 0.5*dt:
     nsolver.solve()
     Un.assign(Unp1)
 
-    print("mass", fd.assemble(mass))
-    print("energy", fd.assemble(energy))
-    print("Q", fd.assemble(Q))
-    print("enstrophy", fd.assemble(Z))
+    print("mass:", fd.assemble(mass))
+    print("energy:", fd.assemble(energy))
+    print("abs vorticity:", fd.assemble(Q))
+    print("enstrophy:", fd.assemble(Z))
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
