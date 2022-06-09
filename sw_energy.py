@@ -73,8 +73,7 @@ def perp(u):
 degree = args.degree # degree of FE space
 V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # can be BDM instead
 V2 = fd.FunctionSpace(mesh, "DG", degree)
-V0 = fd.FunctionSpace(mesh, "CG", degree+2)
-W = fd.MixedFunctionSpace((V1, V2, V0, V1)) # TODO: velocity, depth, potential # vorticity, momentum
+W = fd.MixedFunctionSpace((V1, V2, V1)) # TODO: velocity, depth, potential # vorticity, momentum
 
 Omega = fd.Constant(7.292e-5)  # rotation rate
 f = 2*Omega*cz/fd.Constant(R0)  # Coriolis parameter
@@ -84,7 +83,7 @@ c = fd.sqrt(g*H)
 
 # D = eta + b
 
-v, phi, p, w = fd.TestFunctions(W) # TODO:look at camassa holm example
+v, phi, w = fd.TestFunctions(W) # TODO:look at camassa holm example
 
 dx = fd.dx
 
@@ -109,7 +108,7 @@ eqn = (
     fd.inner(v, u1 - u0)*dx + dT*fd.inner(v, q1*perp(F1))*dx
     - dT*fd.div(v)*(g*(hh + b) + K)*dx
     + phi*(h1 - h0 + dT*fd.div(F1))*dx
-    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
@@ -132,7 +131,7 @@ p_eqn = (
     + dT*u_op(v, uh, hh)
     + phi*(h1 - h0)*dx
     + dT*h_op(phi, uh, hh)
-    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
@@ -141,7 +140,7 @@ p1_eqn = (
     + dT*u_op(v, uh, hh)
     + phi*(h1 - h0)*dx
     + phi*dT*fd.div(F1)*dx
-    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
@@ -158,11 +157,17 @@ p_vel_eqn = (
     + dT*u_energy_op(v, uh, F1, hh)
     + phi*(h1 - h0)*dx
     + phi*dT*fd.div(F1)*dx
-    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
 J_p = fd.derivative(p_eqn, Unp1)
+
+# Compute conserved quantities.
+mass = h0*dx
+energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
+Q = hh*q1*dx
+Z = hh*q1**2*dx
 
 lu_parameters = {
     "snes_monitor":None,
@@ -286,23 +291,23 @@ u0, h0, q0, F0 = Un.split()
 u0.assign(un)
 h0.assign(etan + H - b)
 
-q = fd.TrialFunction(V0)
-p = fd.TestFunction(V0)
+# q = fd.TrialFunction(V0)
+# p = fd.TestFunction(V0)
 
-qn = fd.Function(V0, name="Potential Vorticity")
-veqn = q*p*dx + fd.inner(perp(fd.grad(p)), un)*dx - p*f*dx
-vprob = fd.LinearVariationalProblem(fd.lhs(veqn), fd.rhs(veqn), qn)
-qparams = {'ksp_type':'cg'}
-qsolver = fd.LinearVariationalSolver(vprob,
-                                     solver_parameters=qparams)
+# qn = fd.Function(V0, name="Potential Vorticity")
+# veqn = q*p*dx + fd.inner(perp(fd.grad(p)), un)*dx - p*f*dx
+# vprob = fd.LinearVariationalProblem(fd.lhs(veqn), fd.rhs(veqn), qn)
+# qparams = {'ksp_type':'cg'}
+# qsolver = fd.LinearVariationalSolver(vprob,
+                                    #  solver_parameters=qparams)
 
 file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
 un.assign(u0)
-qsolver.solve()
-q0.assign(qn)
+# qsolver.solve()
+# q0.assign(qn)
 F0.project(u0*h0)
-file_sw.write(un, etan, qn)
+file_sw.write(un, etan, qn) # FIXME: what is this doing?
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
@@ -313,12 +318,18 @@ while t < tmax + 0.5*dt:
     tdump += dt
 
     nsolver.solve()
+
+    print("mass:", fd.assemble(mass))
+    print("energy:", fd.assemble(energy))
+    print("abs vorticity:", fd.assemble(Q))
+    print("enstrophy:", fd.assemble(Z))
+    
     Un.assign(Unp1)
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
         un.assign(u0)
-        qsolver.solve()
+        # qsolver.solve()
         file_sw.write(un, etan, qn)
         tdump -= dumpt
     itcount += nsolver.snes.getLinearSolveIterations()
