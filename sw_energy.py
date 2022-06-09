@@ -61,8 +61,7 @@ def perp(u):
 degree = args.degree # degree of FE space
 V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # can be BDM instead
 V2 = fd.FunctionSpace(mesh, "DG", degree)
-V0 = fd.FunctionSpace(mesh, "CG", degree+2)
-W = fd.MixedFunctionSpace((V1, V2, V0, V1)) # TODO: velocity, depth, potential # vorticity, momentum
+W = fd.MixedFunctionSpace((V1, V2, V1)) # TODO: velocity, depth, momentum
 
 Omega = fd.Constant(7.292e-5)  # rotation rate
 f = 2*Omega*cz/fd.Constant(R0)  # Coriolis parameter
@@ -74,15 +73,15 @@ gamma = fd.Constant(gamma0)
 
 # D = eta + b
 
-v, phi, p, w = fd.TestFunctions(W) # TODO:look at camassa holm example
+v, phi, w = fd.TestFunctions(W) # TODO:look at camassa holm example
 
 dx = fd.dx
 
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
-u0, h0, q0, F0 = fd.split(Un)
-u1, h1, q1, F1 = fd.split(Unp1)
+u0, h0, F0 = fd.split(Un)
+u1, h1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
 hh = 0.5*(h0 + h1)
 
@@ -100,14 +99,14 @@ eqn = (
     - dT*fd.div(v)*(g*(hh + b) + K)*dx
     + phi*(h1 - h0 + dT*fd.div(F1))*dx
     #+ fd.div(v)*gamma*(h1 - h0 + dT*fd.div(F1))*dx
-    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
 
 mass = h0*dx
 energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
-Q = hh*q1*dx
+Q = hh*q1*dx # FIXME: how to compute initial value?
 Z = hh*q1**2*dx
 
 
@@ -265,14 +264,14 @@ minarg = fd.Min(pow(rl, 2),
 bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
-u0, h0, q0, F0 = Un.split()
+u0, h0, F0 = Un.split()
 u0.assign(un)
 h0.assign(etan + H - b)
 
-q = fd.TrialFunction(V0)
-p = fd.TestFunction(V0)
+# q = fd.TrialFunction(V0)
+# p = fd.TestFunction(V0)
 
-qn = fd.Function(V0, name="Potential Vorticity")
+# qn = fd.Function(V0, name="Potential Vorticity")
 veqn = q*p*dx + fd.inner(perp(fd.grad(p)), un)*dx - p*f*dx
 vprob = fd.LinearVariationalProblem(fd.lhs(veqn), fd.rhs(veqn), qn)
 qparams = {'ksp_type':'cg'}
@@ -283,9 +282,9 @@ file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
 un.assign(u0)
 qsolver.solve()
-q0.assign(qn)
+# q0.assign(qn)
 F0.project(u0*h0)
-file_sw.write(un, etan, qn)
+file_sw.write(un, etan, qn) # FIXME: what is this line doing?
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
