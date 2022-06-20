@@ -258,18 +258,18 @@ t = 0.
 
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
-vtransfer = transfer.ManifoldTransfer()
-tm = fd.TransferManager()
-transfers = {
-    # V0.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
-    #                    vtransfer.inject),
-    V1.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
-                       vtransfer.inject),
-    V2.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
-                       vtransfer.inject)
-}
-transfermanager = fd.TransferManager(native_transfers=transfers)
-nsolver.set_transfer_manager(transfermanager)
+# vtransfer = transfer.ManifoldTransfer()
+# tm = fd.TransferManager()
+# transfers = {
+#     # V0.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
+#     #                    vtransfer.inject),
+#     V1.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
+#                        vtransfer.inject),
+#     V2.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
+#                        vtransfer.inject)
+# }
+# transfermanager = fd.TransferManager(native_transfers=transfers)
+# nsolver.set_transfer_manager(transfermanager)
 
 dmax = args.dmax
 hmax = 24*dmax
