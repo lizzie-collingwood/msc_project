@@ -21,15 +21,15 @@ if args.show_args:
     PETSc.Sys.Print(args)
 
 # some domain, parameters and FS setup
-R0 = 6371220.
-H = fd.Constant(5960.)
-base_level = args.base_level
-nrefs = args.ref_level - base_level
+R0 = 6371220. # radius of earth [m]
+H = fd.Constant(5960.) # mean depth [m]
+base_level = args.base_level # TODO: what is base_level representing?
+nrefs = args.ref_level - base_level # number of refinements
 name = args.filename
-deg = args.coords_degree
+deg = args.coords_degree # degree of coordinate field? # TODO:check
 distribution_parameters = {"partition": True, "overlap_type": (fd.DistributedMeshOverlapType.VERTEX, 2)}
 
-def high_order_mesh_hierarchy(mh, degree, R0):
+def high_order_mesh_hierarchy(mh, degree, R0): # TODO: what is this doing?
     meshes = []
     for m in mh:
         X = fd.VectorFunctionSpace(m, "Lagrange", degree)
@@ -61,29 +61,37 @@ for mesh in mh:
 mesh = mh[-1]
 
 R0 = fd.Constant(R0)
-cx, cy, cz = fd.SpatialCoordinate(mesh)
+cx, cy, cz = fd.SpatialCoordinate(mesh) # extract Cartesian coords
 
-outward_normals = fd.CellNormal(mesh)
+outward_normals = fd.CellNormal(mesh) # set up orientation of global normals
 
 
 def perp(u):
+    """ Define the perp operator by taking cross products of velocities with cell normals.
+    """
     return fd.cross(outward_normals, u)
 
 
-degree = args.degree # degree of FE space
-V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # can be BDM instead
-V2 = fd.FunctionSpace(mesh, "DG", degree)
-W = fd.MixedFunctionSpace((V1, V2, V1)) # TODO: velocity, depth, potential # vorticity, momentum
+degree = args.degree # degree of FE space / complex
+V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # set up velocity space
+V2 = fd.FunctionSpace(mesh, "DG", degree) # set up depth space (discontinuous galerkin)
+V0 = fd.FunctionSpace(mesh, "CG", degree+2) # set up space for pv
 
-Omega = fd.Constant(7.292e-5)  # rotation rate
+W = fd.MixedFunctionSpace((V1, V2, V0, V1)) # create mixed space
+# :: velocity, depth, potential vorticity, momentum
+# TODO: why is momentum also in V1? not same units?
+# TODO: what are BDM, DG - types of spaces
+# BDM - vector valued, linear components, \
+# compatible spaces, deg => second order, 
+
+Omega = fd.Constant(7.292e-5)  # angular rotation rate [rads]
 f = 2*Omega*cz/fd.Constant(R0)  # Coriolis parameter
-g = fd.Constant(9.8)  # Gravitational constant
-b = fd.Function(V2, name="Topography")
+g = fd.Constant(9.8)  # Gravitational constant [ms^-2]
+b = fd.Function(V2, name="Topography") # bathymetry from depth space
 c = fd.sqrt(g*H)
 
-# D = eta + b
-
-v, phi, w = fd.TestFunctions(W) # TODO:look at camassa holm example
+# Initialise test functions
+v, phi, p, w = fd.TestFunctions(W)
 
 dx = fd.dx
 
@@ -99,51 +107,52 @@ qh = 0.5*(q0 + q1)
 def both(u):
     return 2*fd.avg(u)
 
-
 K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
-
-eqn = (
-    fd.inner(v, u1 - u0)*dx + dT*fd.inner(v, q1*perp(F1))*dx
-    - dT*fd.div(v)*(g*(hh + b) + K)*dx
-    + phi*(h1 - h0 + dT*fd.div(F1))*dx
-    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-    + fd.inner(w, F1 - hh*uh)*dx
-    )
+# eqn = (
+#     fd.inner(v, u1 - u0)*dx + dT*fd.inner(v, q1*perp(F1))*dx
+#     - dT*fd.div(v)*(g*(hh + b) + K)*dx
+#     + phi*(h1 - h0 + dT*fd.div(F1))*dx
+#     # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+#     + fd.inner(w, F1 - hh*uh)*dx
+#     )
 
 dS = fd.dS
 n = fd.FacetNormal(mesh)
 
-def u_op(v, u, h):
-    K = 0.5*fd.inner(u, u)
-    return (fd.inner(v, f*perp(u))*dx
-            - fd.inner(perp(fd.grad(fd.inner(v, perp(u)))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(u))),
-                          fd.avg(u))*dS
-            - fd.div(v)*(g*(h + b) + K)*dx)
+# def u_op(v, u, h):
+#     K = 0.5*fd.inner(u, u)
+#     return (fd.inner(v, f*perp(u))*dx
+#             - fd.inner(perp(fd.grad(fd.inner(v, perp(u)))), u)*dx
+#             + fd.inner(both(perp(n)*fd.inner(v, perp(u))),
+#                           fd.avg(u))*dS
+#             - fd.div(v)*(g*(h + b) + K)*dx)
 
-def h_op(phi, u, h):
-    return phi*fd.div(u*h)*dx
+# def h_op(phi, u, h):
+#     return phi*fd.div(u*h)*dx
 
-p_eqn = (
-    fd.inner(v, u1 - u0)*dx
-    + dT*u_op(v, uh, hh)
-    + phi*(h1 - h0)*dx
-    + dT*h_op(phi, uh, hh)
-    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-    + fd.inner(w, F1 - hh*uh)*dx
-    )
+# p_eqn = (
+#     fd.inner(v, u1 - u0)*dx
+#     + dT*u_op(v, uh, hh)
+#     + phi*(h1 - h0)*dx
+#     + dT*h_op(phi, uh, hh)
+#     # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+#     + fd.inner(w, F1 - hh*uh)*dx
+#     )
 
-p1_eqn = (
-    fd.inner(v, u1 - u0)*dx
-    + dT*u_op(v, uh, hh)
-    + phi*(h1 - h0)*dx
-    + phi*dT*fd.div(F1)*dx
-    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-    + fd.inner(w, F1 - hh*uh)*dx
-    )
+# p1_eqn = (
+#     fd.inner(v, u1 - u0)*dx
+#     + dT*u_op(v, uh, hh)
+#     + phi*(h1 - h0)*dx
+#     + phi*dT*fd.div(F1)*dx
+#     # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+#     + fd.inner(w, F1 - hh*uh)*dx
+#     )
 
+# finite element variational forms of the 3-variable shallow water equations
+# !!!!!!!! TODO: go thru these - 
+# (will change to upwind)
 def u_energy_op(v, u, F, h):
     K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(F/h))*dx
@@ -152,6 +161,7 @@ def u_energy_op(v, u, F, h):
                           fd.avg(u))*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
+# !!!!!!!! implicit midpoint rule FIXME: go through the midpoint rule
 p_vel_eqn = (
     fd.inner(v, u1 - u0)*dx
     + dT*u_energy_op(v, uh, F1, hh)
@@ -161,12 +171,12 @@ p_vel_eqn = (
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
-J_p = fd.derivative(p_eqn, Unp1)
+# J_p = fd.derivative(p_eqn, Unp1)
 
 # Compute conserved quantities.
 mass = h0*dx
 energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
-Q = hh*q1*dx
+Q = hh*q1*dx # FIXME: how do i compute these now? - still keep in q solver stuff
 Z = hh*q1**2*dx
 
 lu_parameters = {
@@ -176,6 +186,7 @@ lu_parameters = {
     "pc_factor_mat_solver_type": "superlu_dist"
 }
 
+# tell petsce how to solve nonlinear equations
 mg_parameters = {
     "snes_monitor": None,
     "mat_type": "matfree",
@@ -240,19 +251,18 @@ block_parameters = {
     "fieldsplit_1_assembled_pc_type": "lu"
 }
 
-
+# time step size [s]
 dt = 60*60*args.dt
 dT.assign(dt)
 t = 0.
 
-nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)#, Jp=J_p)
-nsolver = fd.NonlinearVariationalSolver(nprob,
-                                        solver_parameters=mg_parameters)
+nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
+nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 vtransfer = transfer.ManifoldTransfer()
 tm = fd.TransferManager()
 transfers = {
-    V0.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
-                       vtransfer.inject),
+    # V0.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
+    #                    vtransfer.inject),
     V1.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
                        vtransfer.inject),
     V2.ufl_element(): (vtransfer.prolong, vtransfer.restrict,
@@ -269,8 +279,8 @@ dumpt = hdump*60.*60.
 tdump = 0.
 
 x = fd.SpatialCoordinate(mesh)
-u_0 = 20.0  # maximum amplitude of the zonal wind [m/s]
-u_max = fd.Constant(u_0)
+u_0 = 20.0
+u_max = fd.Constant(u_0) # maximum amplitude of the zonal wind [m/s]
 u_expr = fd.as_vector([-u_max*x[1]/R0, u_max*x[0]/R0, 0.0])
 eta_expr = - ((R0 * Omega * u_max + u_max*u_max/2.0)*(x[2]*x[2]/(R0*R0)))/g
 un = fd.Function(V1, name="Velocity").project(u_expr)
@@ -287,27 +297,31 @@ minarg = fd.Min(pow(rl, 2),
 bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
+# Initial conditions
 u0, h0, q0, F0 = Un.split()
 u0.assign(un)
 h0.assign(etan + H - b)
 
-# q = fd.TrialFunction(V0)
-# p = fd.TestFunction(V0)
+# compute PV using solvers
+q = fd.TrialFunction(V0)
+p = fd.TestFunction(V0)
 
-# qn = fd.Function(V0, name="Potential Vorticity")
-# veqn = q*p*dx + fd.inner(perp(fd.grad(p)), un)*dx - p*f*dx
-# vprob = fd.LinearVariationalProblem(fd.lhs(veqn), fd.rhs(veqn), qn)
-# qparams = {'ksp_type':'cg'}
-# qsolver = fd.LinearVariationalSolver(vprob,
-                                    #  solver_parameters=qparams)
+qn = fd.Function(V0, name="Potential Vorticity")
+veqn = q*p*dx + fd.inner(perp(fd.grad(p)), un)*dx - p*f*dx
+vprob = fd.LinearVariationalProblem(fd.lhs(veqn), fd.rhs(veqn), qn)
+qparams = {'ksp_type':'cg'}
+qsolver = fd.LinearVariationalSolver(vprob,
+                                     solver_parameters=qparams)
 
+# write initial fields into a file which can be interpreted by software ParaView
 file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
+# Store initial conditions in functions to be used later on
 un.assign(u0)
-# qsolver.solve()
-# q0.assign(qn)
+qsolver.solve()
+q0.assign(qn)
 F0.project(u0*h0)
-file_sw.write(un, etan, qn) # FIXME: what is this doing?
+file_sw.write(un, etan, qn) # FIXME: can i just remove qn?
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
@@ -317,20 +331,24 @@ while t < tmax + 0.5*dt:
     t += dt
     tdump += dt
 
+    # solve for updated fields
     nsolver.solve()
 
+    # Compute and print quantities that should be conserved
     print("mass:", fd.assemble(mass))
     print("energy:", fd.assemble(energy))
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
-    
+
+    # update field
     Un.assign(Unp1)
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
         un.assign(u0)
-        # qsolver.solve()
+        qsolver.solve()
         file_sw.write(un, etan, qn)
         tdump -= dumpt
+
     itcount += nsolver.snes.getLinearSolveIterations()
 PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, "ref_level", args.ref_level, "dmax", args.dmax)
