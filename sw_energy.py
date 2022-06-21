@@ -25,10 +25,10 @@ H = fd.Constant(5960.) # mean depth [m]
 base_level = args.base_level # TODO: what is base_level representing?
 nrefs = args.ref_level - base_level # number of refinements
 name = args.filename
-deg = args.coords_degree # degree of coordinate field? # TODO:check
+deg = args.coords_degree # degree of coordinate field? 
 distribution_parameters = {"partition": True, "overlap_type": (fd.DistributedMeshOverlapType.VERTEX, 2)}
 
-def high_order_mesh_hierarchy(mh, degree, R0): # TODO: what is this doing?
+def high_order_mesh_hierarchy(mh, degree, R0): # works out multigrid mesh
     meshes = []
     for m in mh:
         X = fd.VectorFunctionSpace(m, "Lagrange", degree)
@@ -78,8 +78,6 @@ V0 = fd.FunctionSpace(mesh, "CG", degree+2) # set up space for pv
 
 W = fd.MixedFunctionSpace((V1, V2, V0, V1)) # create mixed space
 # :: velocity, depth, potential vorticity, momentum
-# TODO: why is momentum also in V1? not same units?
-# TODO: what are BDM, DG - types of spaces
 # BDM - vector valued, linear components, \
 # compatible spaces, deg => second order, 
 
@@ -150,7 +148,7 @@ n = fd.FacetNormal(mesh)
 #     )
 
 # finite element variational forms of the 3-variable shallow water equations
-# !!!!!!!! TODO: go thru these - 
+# !!!!!!!!
 # (will change to upwind)
 def u_energy_op(v, u, F, h):
     K = 0.5*fd.inner(u, u)
@@ -160,7 +158,7 @@ def u_energy_op(v, u, F, h):
                           fd.avg(u))*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
-# !!!!!!!! implicit midpoint rule FIXME: go through the midpoint rule
+# !!!!!!!! implicit midpoint rule
 p_vel_eqn = (
     fd.inner(v, u1 - u0)*dx
     + dT*u_energy_op(v, uh, F1, hh)
@@ -175,80 +173,80 @@ p_vel_eqn = (
 # Compute conserved quantities.
 mass = h0*dx
 energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
-Q = hh*q1*dx # FIXME: how do i compute these now? - still keep in q solver stuff
+Q = hh*q1*dx
 Z = hh*q1**2*dx
 
-lu_parameters = {
-    "snes_monitor":None,
-    "ksp_type":"preonly",
-    "pc_type":"lu",
-    "pc_factor_mat_solver_type": "superlu_dist"
-}
+# lu_parameters = {
+#     "snes_monitor":None,
+#     "ksp_type":"preonly",
+#     "pc_type":"lu",
+#     "pc_factor_mat_solver_type": "superlu_dist"
+# }
 
 # tell petsce how to solve nonlinear equations
 mg_parameters = {
-    "snes_monitor": None,
-    "mat_type": "matfree",
-    "mat_mumps_icntl_24":"1",
-    "ksp_type": "fgmres",
-    "ksp_monitor_true_residual": None,
-    "ksp_converged_reason": None,
-    "ksp_atol": 1e-8,
-    "ksp_rtol": 1e-8,
-    "ksp_max_it": 40,
-    "pc_type": "mg",
-    "pc_mg_cycle_type": "v",
-    "pc_mg_type": "multiplicative",
-    "mg_levels_ksp_type": "gmres",
-    "mg_levels_ksp_max_it": 5,
+    "snes_monitor": None, # monitor the nonlinear solver's iterations from the web browser.
+    "mat_type": "matfree", # works with matrix as a linear operator rather than with its representation as a matrix
+    "mat_mumps_icntl_24":"1", # mumps - package providing direct solvers (LU and Cholesky) for distributed and sequential matrices - icntl_24: detection of null pivot rows (0 or 1)
+    "ksp_type": "fgmres", # ksp is the package of linear solvers - flexible GMRES
+    "ksp_monitor_true_residual": None, # print the residual after each iteration
+    "ksp_converged_reason": None, # print reason for convergence
+    "ksp_atol": 1e-8, # conv test: measure of the absolute size of the residual norm
+    "ksp_rtol": 1e-8, # conv test: the decrease of the residual norm relative to the norm of the right hand side
+    "ksp_max_it": 40, # cap the number of iterations
+    "pc_type": "mg", # precontitioning method - geometric multigrid preconditioner (Newton-Krylov-multigrid method)
+    "pc_mg_cycle_type": "v", # V-cycle
+    "pc_mg_type": "multiplicative", # one of additive multiplicative full cascade
+    "mg_levels_ksp_type": "gmres", # linear solver for the mg levels
+    "mg_levels_ksp_max_it": 5, # max iterations for the levels of multigrid
     #"mg_levels_ksp_convergence_test": "skip",
-    "mg_levels_pc_type": "python",
-    "mg_levels_pc_python_type": "firedrake.PatchPC",
-    "mg_levels_patch_pc_patch_save_operators": True,
-    "mg_levels_patch_pc_patch_partition_of_unity": True,
-    "mg_levels_patch_pc_patch_sub_mat_type": "seqdense",
-    "mg_levels_patch_pc_patch_construct_codim": 0,
-    "mg_levels_patch_pc_patch_construct_type": "vanka",
-    "mg_levels_patch_pc_patch_local_type": "additive",
-    "mg_levels_patch_pc_patch_precompute_element_tensors": True,
-    "mg_levels_patch_pc_patch_symmetrise_sweep": False,
-    "mg_levels_patch_sub_ksp_type": "preonly",
-    "mg_levels_patch_sub_pc_type": "lu",
-    "mg_coarse_ksp_type": "preonly",
-    "mg_coarse_pc_type": "python",
-    "mg_coarse_pc_python_type": "firedrake.AssembledPC",
-    "mg_coarse_assembled_pc_type": "lu",
-    "mg_coarse_assembled_ksp_type": "preonly",
-    "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist",
+    "mg_levels_pc_type": "python", #
+    "mg_levels_pc_python_type": "firedrake.PatchPC", #
+    "mg_levels_patch_pc_patch_save_operators": True, #
+    "mg_levels_patch_pc_patch_partition_of_unity": True, #
+    "mg_levels_patch_pc_patch_sub_mat_type": "seqdense", #
+    "mg_levels_patch_pc_patch_construct_codim": 0, #
+    "mg_levels_patch_pc_patch_construct_type": "vanka", #
+    "mg_levels_patch_pc_patch_local_type": "additive", #
+    "mg_levels_patch_pc_patch_precompute_element_tensors": True, #
+    "mg_levels_patch_pc_patch_symmetrise_sweep": False, #
+    "mg_levels_patch_sub_ksp_type": "preonly", # applies only pc exactly once
+    "mg_levels_patch_sub_pc_type": "lu", # LU preconditioner
+    "mg_coarse_ksp_type": "preonly", # on coarse level use only pc exactly once
+    "mg_coarse_pc_type": "python", #
+    "mg_coarse_pc_python_type": "firedrake.AssembledPC", #
+    "mg_coarse_assembled_pc_type": "lu", #
+    "mg_coarse_assembled_ksp_type": "preonly", #
+    "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", #
 }
 
-block_parameters = {
-    "snes_monitor": None,
-    "mat_type": "matfree",
-    "ksp_type": "fgmres",
-    #"ksp_view": None,
-    "ksp_monitor_true_residual": None,
-    "ksp_converged_reason": None,
-    "ksp_atol": 1e-8,
-    "ksp_rtol": 1e-8,
-    "ksp_max_it": 20,
-    "pc_type":"fieldsplit",
-    "pc_fieldsplit_type": "schur",
-    "pc_fieldsplit_schur_fact_type": "full",
-    "pc_fieldsplit_off_diag_use_amat": True,
-    "pc_fieldsplit_0_fields": "2,3",
-    "pc_fieldsplit_1_fields": "0,1",
-    "fieldsplit_0_ksp_type": "preonly",
-    "fieldsplit_0_pc_type": "python",
-    "fieldsplit_0_pc_python_type": "firedrake.AssembledPC",
-    "fieldsplit_0_assembled_pc_type": "lu",
-    "fieldsplit_1_ksp_type": "gmres",
-    "fieldsplit_1_ksp_max_it": 2,
-    "fieldsplit_1_ksp_monitor": None,
-    "fieldsplit_1_pc_type": "python",
-    "fieldsplit_1_pc_python_type": "firedrake.AssembledPC",
-    "fieldsplit_1_assembled_pc_type": "lu"
-}
+# block_parameters = {
+#     "snes_monitor": None,
+#     "mat_type": "matfree",
+#     "ksp_type": "fgmres",
+#     #"ksp_view": None,
+#     "ksp_monitor_true_residual": None,
+#     "ksp_converged_reason": None,
+#     "ksp_atol": 1e-8,
+#     "ksp_rtol": 1e-8,
+#     "ksp_max_it": 20,
+#     "pc_type":"fieldsplit",
+#     "pc_fieldsplit_type": "schur",
+#     "pc_fieldsplit_schur_fact_type": "full",
+#     "pc_fieldsplit_off_diag_use_amat": True,
+#     "pc_fieldsplit_0_fields": "2,3",
+#     "pc_fieldsplit_1_fields": "0,1",
+#     "fieldsplit_0_ksp_type": "preonly",
+#     "fieldsplit_0_pc_type": "python",
+#     "fieldsplit_0_pc_python_type": "firedrake.AssembledPC",
+#     "fieldsplit_0_assembled_pc_type": "lu",
+#     "fieldsplit_1_ksp_type": "gmres",
+#     "fieldsplit_1_ksp_max_it": 2,
+#     "fieldsplit_1_ksp_monitor": None,
+#     "fieldsplit_1_pc_type": "python",
+#     "fieldsplit_1_pc_python_type": "firedrake.AssembledPC",
+#     "fieldsplit_1_assembled_pc_type": "lu"
+# }
 
 # time step size [s]
 dt = 60*60*args.dt
@@ -308,7 +306,7 @@ un.assign(u0)
 qsolver.solve()
 q0.assign(qn)
 F0.project(u0*h0)
-file_sw.write(un, etan, qn) # FIXME: can i just remove qn?
+file_sw.write(un, etan, qn)
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
