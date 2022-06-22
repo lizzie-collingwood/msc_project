@@ -70,7 +70,7 @@ def perp(u):
     """
     return fd.cross(outward_normals, u)
 
-
+# === Set up function spaces and mixed function space
 degree = args.degree # degree of FE space / complex
 V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # set up velocity space
 V2 = fd.FunctionSpace(mesh, "DG", degree) # set up depth space (discontinuous galerkin)
@@ -109,7 +109,7 @@ dT = fd.Constant(0.)
 dS = fd.dS
 n = fd.FacetNormal(mesh)
 
-
+# ========= Equations
 # finite element variational forms of the 3-variable shallow water equations
 # (will change to upwind)
 def u_energy_op(v, u, F, h):
