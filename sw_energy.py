@@ -106,48 +106,11 @@ def both(u):
 K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
-# eqn = (
-#     fd.inner(v, u1 - u0)*dx + dT*fd.inner(v, q1*perp(F1))*dx
-#     - dT*fd.div(v)*(g*(hh + b) + K)*dx
-#     + phi*(h1 - h0 + dT*fd.div(F1))*dx
-#     # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-#     + fd.inner(w, F1 - hh*uh)*dx
-#     )
-
 dS = fd.dS
 n = fd.FacetNormal(mesh)
 
-# def u_op(v, u, h):
-#     K = 0.5*fd.inner(u, u)
-#     return (fd.inner(v, f*perp(u))*dx
-#             - fd.inner(perp(fd.grad(fd.inner(v, perp(u)))), u)*dx
-#             + fd.inner(both(perp(n)*fd.inner(v, perp(u))),
-#                           fd.avg(u))*dS
-#             - fd.div(v)*(g*(h + b) + K)*dx)
-
-# def h_op(phi, u, h):
-#     return phi*fd.div(u*h)*dx
-
-# p_eqn = (
-#     fd.inner(v, u1 - u0)*dx
-#     + dT*u_op(v, uh, hh)
-#     + phi*(h1 - h0)*dx
-#     + dT*h_op(phi, uh, hh)
-#     # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-#     + fd.inner(w, F1 - hh*uh)*dx
-#     )
-
-# p1_eqn = (
-#     fd.inner(v, u1 - u0)*dx
-#     + dT*u_op(v, uh, hh)
-#     + phi*(h1 - h0)*dx
-#     + phi*dT*fd.div(F1)*dx
-#     # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
-#     + fd.inner(w, F1 - hh*uh)*dx
-#     )
 
 # finite element variational forms of the 3-variable shallow water equations
-# !!!!!!!!
 # (will change to upwind)
 def u_energy_op(v, u, F, h):
     K = 0.5*fd.inner(u, u)
@@ -157,34 +120,23 @@ def u_energy_op(v, u, F, h):
                           fd.avg(u))*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
-# !!!!!!!! implicit midpoint rule
+# Implicit midpoint rule
 p_vel_eqn = (
     fd.inner(v, u1 - u0)*dx
     + dT*u_energy_op(v, uh, F1, hh)
     + phi*(h1 - h0)*dx
     + phi*dT*fd.div(F1)*dx
-    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
-
-# J_p = fd.derivative(p_eqn, Unp1)
 
 # Compute conserved quantities.
 mass = h0*dx
 energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
 
-# lu_parameters = {
-#     "snes_monitor":None,
-#     "ksp_type":"preonly",
-#     "pc_type":"lu",
-#     "pc_factor_mat_solver_type": "superlu_dist"
-# }
-
-# tell petsce how to solve nonlinear equations
+# Tell petsce how to solve nonlinear equations
 mg_parameters = {
     "snes_monitor": None, # monitor the nonlinear solver's iterations from the web browser.
     "mat_type": "matfree", # works with matrix as a linear operator rather than with its representation as a matrix
-    # "mat_mumps_icntl_24":"1", # mumps - package providing direct solvers (LU and Cholesky) for distributed and sequential matrices - icntl_24: detection of null pivot rows (0 or 1)
     "ksp_type": "fgmres", # ksp is the package of linear solvers - flexible GMRES
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
@@ -196,7 +148,6 @@ mg_parameters = {
     "pc_mg_type": "multiplicative", # one of additive multiplicative full cascade
     "mg_levels_ksp_type": "gmres", # linear solver for the mg levels
     "mg_levels_ksp_max_it": 5, # max iterations for the levels of multigrid
-    #"mg_levels_ksp_convergence_test": "skip",
     "mg_levels_pc_type": "python", #
     "mg_levels_pc_python_type": "firedrake.PatchPC", #
     "mg_levels_patch_pc_patch_save_operators": True, #
@@ -217,39 +168,12 @@ mg_parameters = {
     "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", #
 }
 
-# block_parameters = {
-#     "snes_monitor": None,
-#     "mat_type": "matfree",
-#     "ksp_type": "fgmres",
-#     #"ksp_view": None,
-#     "ksp_monitor_true_residual": None,
-#     "ksp_converged_reason": None,
-#     "ksp_atol": 1e-8,
-#     "ksp_rtol": 1e-8,
-#     "ksp_max_it": 20,
-#     "pc_type":"fieldsplit",
-#     "pc_fieldsplit_type": "schur",
-#     "pc_fieldsplit_schur_fact_type": "full",
-#     "pc_fieldsplit_off_diag_use_amat": True,
-#     "pc_fieldsplit_0_fields": "2,3",
-#     "pc_fieldsplit_1_fields": "0,1",
-#     "fieldsplit_0_ksp_type": "preonly",
-#     "fieldsplit_0_pc_type": "python",
-#     "fieldsplit_0_pc_python_type": "firedrake.AssembledPC",
-#     "fieldsplit_0_assembled_pc_type": "lu",
-#     "fieldsplit_1_ksp_type": "gmres",
-#     "fieldsplit_1_ksp_max_it": 2,
-#     "fieldsplit_1_ksp_monitor": None,
-#     "fieldsplit_1_pc_type": "python",
-#     "fieldsplit_1_pc_python_type": "firedrake.AssembledPC",
-#     "fieldsplit_1_assembled_pc_type": "lu"
-# }
-
-# time step size [s]
+# Time step size [s]
 dt = 60*60*args.dt
 dT.assign(dt)
 t = 0.
 
+# Nonlinear solver
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 nsolver.snes.getLinearSolveIterations() # records key information TODO: make sure this is working
@@ -286,7 +210,7 @@ u0, h0, F0 = Un.split()
 u0.assign(un)
 h0.assign(etan + H - b)
 
-# compute PV using solvers
+# Compute potential vorticity using solvers
 q = fd.TrialFunction(V0)
 p = fd.TestFunction(V0)
 
@@ -297,12 +221,14 @@ qparams = {'ksp_type':'cg'}
 qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
+# Compute absolute vorticity and enstrophy
 Q = hh*qn*dx
 Z = hh*qn**2*dx
 
-# write initial fields into a file which can be interpreted by software ParaView
+# Write initial fields into a file which can be interpreted by software ParaView
 file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
+
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
@@ -317,7 +243,7 @@ while t < tmax + 0.5*dt:
     t += dt
     tdump += dt
 
-    # solve for updated fields
+    # Solve for updated fields
     nsolver.solve()
 
     # Compute and print quantities that should be conserved
@@ -326,7 +252,7 @@ while t < tmax + 0.5*dt:
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
 
-    # update field
+    # Update field
     Un.assign(Unp1)
 
     if tdump > dumpt - dt*0.5:
