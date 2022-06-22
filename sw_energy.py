@@ -184,7 +184,7 @@ energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
 mg_parameters = {
     "snes_monitor": None, # monitor the nonlinear solver's iterations from the web browser.
     "mat_type": "matfree", # works with matrix as a linear operator rather than with its representation as a matrix
-    "mat_mumps_icntl_24":"1", # mumps - package providing direct solvers (LU and Cholesky) for distributed and sequential matrices - icntl_24: detection of null pivot rows (0 or 1)
+    # "mat_mumps_icntl_24":"1", # mumps - package providing direct solvers (LU and Cholesky) for distributed and sequential matrices - icntl_24: detection of null pivot rows (0 or 1)
     "ksp_type": "fgmres", # ksp is the package of linear solvers - flexible GMRES
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
@@ -212,7 +212,7 @@ mg_parameters = {
     "mg_coarse_ksp_type": "preonly", # on coarse level use only pc exactly once
     "mg_coarse_pc_type": "python", #
     "mg_coarse_pc_python_type": "firedrake.AssembledPC", #
-    "mg_coarse_assembled_pc_type": "lu", #
+    "mg_coarse_assembled_pc_type": "lu", # coarsest level not matrix free
     "mg_coarse_assembled_ksp_type": "preonly", #
     "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", #
 }
@@ -252,14 +252,16 @@ t = 0.
 
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
+nsolver.snes.getLinearSolveIterations() # records key information TODO: make sure this is working
 
-dmax = args.dmax
+dmax = args.dmax 
 hmax = 24*dmax
 tmax = 60.*60.*hmax
 hdump = args.dumpt
 dumpt = hdump*60.*60.
 tdump = 0.
 
+# --- set up test case (15 days then 50)
 x = fd.SpatialCoordinate(mesh)
 u_0 = 20.0
 u_max = fd.Constant(u_0) # maximum amplitude of the zonal wind [m/s]
@@ -304,7 +306,6 @@ etan.assign(h0 - H + b)
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
-# q0.assign(qn)
 F0.project(u0*h0)
 file_sw.write(un, etan, qn)
 Unp1.assign(Un)
