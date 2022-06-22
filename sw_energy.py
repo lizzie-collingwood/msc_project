@@ -76,7 +76,7 @@ V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # set up velocity space
 V2 = fd.FunctionSpace(mesh, "DG", degree) # set up depth space (discontinuous galerkin)
 V0 = fd.FunctionSpace(mesh, "CG", degree+2) # set up space for pv
 
-W = fd.MixedFunctionSpace((V1, V2, V0, V1)) # create mixed space
+W = fd.MixedFunctionSpace((V1, V2, V1)) # create mixed space
 # :: velocity, depth, potential vorticity, momentum
 # BDM - vector valued, linear components, \
 # compatible spaces, deg => second order, 
@@ -88,18 +88,17 @@ b = fd.Function(V2, name="Topography") # bathymetry from depth space
 c = fd.sqrt(g*H)
 
 # Initialise test functions
-v, phi, p, w = fd.TestFunctions(W)
+v, phi, w = fd.TestFunctions(W)
 
 dx = fd.dx
 
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
-u0, h0, q0, F0 = fd.split(Un)
-u1, h1, q1, F1 = fd.split(Unp1)
+u0, h0, F0 = fd.split(Un)
+u1, h1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
 hh = 0.5*(h0 + h1)
-qh = 0.5*(q0 + q1)
 
 def both(u):
     return 2*fd.avg(u)
@@ -173,8 +172,6 @@ p_vel_eqn = (
 # Compute conserved quantities.
 mass = h0*dx
 energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
-Q = hh*q1*dx
-Z = hh*q1**2*dx
 
 # lu_parameters = {
 #     "snes_monitor":None,
@@ -283,7 +280,7 @@ bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
 # Initial conditions
-u0, h0, q0, F0 = Un.split()
+u0, h0, F0 = Un.split()
 u0.assign(un)
 h0.assign(etan + H - b)
 
@@ -298,13 +295,16 @@ qparams = {'ksp_type':'cg'}
 qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
+Q = hh*qn*dx
+Z = hh*qn**2*dx
+
 # write initial fields into a file which can be interpreted by software ParaView
 file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
-q0.assign(qn)
+# q0.assign(qn)
 F0.project(u0*h0)
 file_sw.write(un, etan, qn)
 Unp1.assign(Un)
