@@ -164,7 +164,7 @@ p_vel_eqn = (
     + dT*u_energy_op(v, uh, F1, hh)
     + phi*(h1 - h0)*dx
     + phi*dT*fd.div(F1)*dx
-    # + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
+    + p*q1*hh*dx + fd.inner(perp(fd.grad(p)), uh)*dx - p*f*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
