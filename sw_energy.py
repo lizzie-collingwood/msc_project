@@ -231,8 +231,9 @@ etan.assign(h0 - H + b)
 
 # # Write new file to hold solver data
 # file_sw_data = fd.File(name+'.JSON') 
-with open(name+'.json', 'w') as f:
-    json.dump(mass, f)
+# with open(name+'.json', 'w') as f:
+#     json.dump(mass, f)
+massdata = {t: mass}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -258,11 +259,6 @@ while t < tmax + 0.5*dt:
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
 
-    # Print the number of inner solvers
-    snes_its = nsolver.snes.getLinearSolveIterations()
-    print(" Linear Solver: %5i iterations" % (snes_its)) # records key information TODO: make sure this is working
-    # file_sw_data.write(snes_its, _mass)
-
     # Update field
     Un.assign(Unp1)
 
@@ -271,10 +267,13 @@ while t < tmax + 0.5*dt:
         un.assign(u0)
         qsolver.solve()
         file_sw.write(un, etan, qn)
-        with open(name+'.json', 'w') as f:
-            json.dump(_mass, f)
+        massdata.update({t: _mass})
         tdump -= dumpt
 
-    itcount += nsolver.snes.getLinearSolveIterations()
+    itcount += nsolver.snes.getLinearSolveIterations() 
+
+with open(name+'.json', 'w') as f:
+    json.dump(massdata, f)
+
 PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
- "ref_level", args.ref_level, "dmax", args.dmax, "solverits", snes_its)
+ "ref_level", args.ref_level, "dmax", args.dmax)
