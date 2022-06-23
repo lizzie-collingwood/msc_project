@@ -13,6 +13,7 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours. Defa
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
+parser.add_argument('--approx_type', type=str, default='upwind', help='Calculation of an approximation of u: "avg" or "upwind".')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
 args = parser.parse_known_args()
 args = args[0]
@@ -101,9 +102,6 @@ u1, h1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
 hh = 0.5*(h0 + h1)
 
-def both(u):
-    return 2*fd.avg(u)
-
 K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
@@ -114,11 +112,20 @@ n = fd.FacetNormal(mesh)
 # finite element variational forms of the 3-variable shallow water equations
 # (will change to upwind)
 def u_energy_op(v, u, F, h):
+    if args.approx_type == 'avg':
+        uappx = fd.avg(u)
+    else:
+        uappx = 0.5 * (fd.sign(fd.dot(uh, n)) + 1)
+
+    def both(u):
+        return 2*uappx
+        # return 2*fd.avg(u)
+
     K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(F/h))*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
             + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))),
-                          fd.avg(u))*dS
+                          )*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
 # Implicit midpoint rule
@@ -276,11 +283,11 @@ while t < tmax + 0.5*dt:
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations() 
-    nonlin_itcount += nsolver.snes.SNESGetIterationNumber()
+    # nonlin_itcount += nsolver.snes.SNESGetIterationNumber() # FIXME: this is incorrect
 
 print(massdata)
 with open(name+'.json', 'w') as f:
     json.dump(massdata, f)
 
-PETSc.Sys.Print("Iterations", itcount, "nonlinear its", nonlin_itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
+PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
  "ref_level", args.ref_level, "dmax", args.dmax)
