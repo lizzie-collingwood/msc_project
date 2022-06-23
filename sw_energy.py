@@ -233,7 +233,7 @@ etan.assign(h0 - H + b)
 # file_sw_data = fd.File(name+'.JSON') 
 # with open(name+'.json', 'w') as f:
 #     json.dump(mass, f)
-massdata = {t: mass}
+massdata = {t: fd.assemble(mass)}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -262,12 +262,13 @@ while t < tmax + 0.5*dt:
     # Update field
     Un.assign(Unp1)
 
+    massdata.update({t: _mass})
+
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
         un.assign(u0)
         qsolver.solve()
         file_sw.write(un, etan, qn)
-        massdata.update({t: _mass})
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations() 
