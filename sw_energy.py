@@ -271,7 +271,7 @@ while t < tmax + 0.5*dt:
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations() 
-
+print(massdata)
 with open(name+'.json', 'w') as f:
     json.dump(massdata, f)
 
