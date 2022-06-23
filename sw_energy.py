@@ -176,7 +176,6 @@ t = 0.
 # Nonlinear solver
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
-nsolver.snes.getLinearSolveIterations() # records key information TODO: make sure this is working
 
 dmax = args.dmax 
 hmax = 24*dmax
@@ -229,6 +228,9 @@ Z = hh*qn**2*dx
 file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
 
+# Write new file to hold solver data
+file_sw_data = fd.File(name+'.JSON') 
+
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
@@ -247,10 +249,16 @@ while t < tmax + 0.5*dt:
     nsolver.solve()
 
     # Compute and print quantities that should be conserved
-    print("mass:", fd.assemble(mass))
+    _mass = fd.assemble(mass)
+    print("mass:", _mass)
     print("energy:", fd.assemble(energy))
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
+
+    # Print the number of inner solvers
+    snes_its = nsolver.snes.getLinearSolveIterations()
+    print(" Linear Solver: %5i iterations" % (snes_its)) # records key information TODO: make sure this is working
+    file_sw_data.write(snes_its, _mass)
 
     # Update field
     Un.assign(Unp1)
@@ -263,4 +271,5 @@ while t < tmax + 0.5*dt:
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations()
-PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, "ref_level", args.ref_level, "dmax", args.dmax)
+PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
+ "ref_level", args.ref_level, "dmax", args.dmax)
