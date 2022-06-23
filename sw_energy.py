@@ -117,15 +117,14 @@ def u_energy_op(v, u, F, h):
     else:
         uappx = 0.5 * (fd.sign(fd.dot(uh, n)) + 1)
 
-    def both(u):
-        return 2*uappx
-        # return 2*fd.avg(u)
+    def both(v):
+        """Is this right??""" # TODO: chekc this is right
+        return 2*fd.avg(v)
 
     K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(F/h))*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))),
-                          )*dS
+            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))),uappx)*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
 # Implicit midpoint rule
