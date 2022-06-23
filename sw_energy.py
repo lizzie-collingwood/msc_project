@@ -235,7 +235,7 @@ etan.assign(h0 - H + b)
 un.assign(u0)
 qsolver.solve()
 F0.project(u0*h0)
-file_sw.write(un, etan, qn, mass, energy, Q, Z, 0)
+file_sw.write(un, etan, qn, mass, energy, Q, Z)
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
@@ -266,7 +266,7 @@ while t < tmax + 0.5*dt:
         etan.assign(h0 - H + b)
         un.assign(u0)
         qsolver.solve()
-        file_sw.write(un, etan, qn, fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z), snes_its)
+        file_sw.write(un, etan, qn, fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z))
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations()
