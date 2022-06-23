@@ -244,6 +244,7 @@ Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
 itcount = 0
+nonlin_itcount = 0
 while t < tmax + 0.5*dt:
     PETSc.Sys.Print(t)
     t += dt
@@ -272,9 +273,11 @@ while t < tmax + 0.5*dt:
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations() 
+    nonlin_itcount += nsolver.snes.getIterations()
+    
 print(massdata)
 with open(name+'.json', 'w') as f:
     json.dump(massdata, f)
 
-PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
+PETSc.Sys.Print("Iterations", itcount, "nonlinear its", nonlin_itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
  "ref_level", args.ref_level, "dmax", args.dmax)
