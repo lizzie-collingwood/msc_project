@@ -1,4 +1,5 @@
 import firedrake as fd
+import json
 #get command arguments
 from petsc4py import PETSc
 PETSc.Sys.popErrorHandler()
@@ -230,6 +231,8 @@ etan.assign(h0 - H + b)
 
 # # Write new file to hold solver data
 # file_sw_data = fd.File(name+'.JSON') 
+with open(name+'.json', 'w') as f:
+    json.dump(mass, f)
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -249,7 +252,8 @@ while t < tmax + 0.5*dt:
     nsolver.solve()
 
     # Compute and print quantities that should be conserved
-    print("mass:", fd.assemble(mass))
+    _mass = fd.assemble(mass)
+    print("mass:", _mass)
     print("energy:", fd.assemble(energy))
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
@@ -267,8 +271,10 @@ while t < tmax + 0.5*dt:
         un.assign(u0)
         qsolver.solve()
         file_sw.write(un, etan, qn)
+        with open(name+'.json', 'w') as f:
+            json.dump(_mass, f)
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations()
 PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
- "ref_level", args.ref_level, "dmax", args.dmax)
+ "ref_level", args.ref_level, "dmax", args.dmax, "solverits", snes_its)
