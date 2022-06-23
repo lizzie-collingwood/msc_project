@@ -228,14 +228,14 @@ Z = hh*qn**2*dx
 file_sw = fd.File(name+'.pvd')
 etan.assign(h0 - H + b)
 
-# Write new file to hold solver data
-file_sw_data = fd.File(name+'.JSON') 
+# # Write new file to hold solver data
+# file_sw_data = fd.File(name+'.JSON') 
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
 F0.project(u0*h0)
-file_sw.write(un, etan, qn)
+file_sw.write(un, etan, qn, mass, energy, Q, Z, 0)
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
@@ -249,8 +249,7 @@ while t < tmax + 0.5*dt:
     nsolver.solve()
 
     # Compute and print quantities that should be conserved
-    _mass = fd.assemble(mass)
-    print("mass:", _mass)
+    print("mass:", fd.assemble(mass))
     print("energy:", fd.assemble(energy))
     print("abs vorticity:", fd.assemble(Q))
     print("enstrophy:", fd.assemble(Z))
@@ -258,7 +257,7 @@ while t < tmax + 0.5*dt:
     # Print the number of inner solvers
     snes_its = nsolver.snes.getLinearSolveIterations()
     print(" Linear Solver: %5i iterations" % (snes_its)) # records key information TODO: make sure this is working
-    file_sw_data.write(snes_its, _mass)
+    # file_sw_data.write(snes_its, _mass)
 
     # Update field
     Un.assign(Unp1)
@@ -267,7 +266,7 @@ while t < tmax + 0.5*dt:
         etan.assign(h0 - H + b)
         un.assign(u0)
         qsolver.solve()
-        file_sw.write(un, etan, qn)
+        file_sw.write(un, etan, qn, fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z), snes_its)
         tdump -= dumpt
 
     itcount += nsolver.snes.getLinearSolveIterations()
