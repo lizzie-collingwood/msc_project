@@ -112,19 +112,18 @@ n = fd.FacetNormal(mesh)
 # finite element variational forms of the 3-variable shallow water equations
 # (will change to upwind)
 def u_energy_op(v, u, F, h):
-    if args.approx_type == 'avg':
-        uappx = fd.avg(u)
-    else:
-        uappx = 0.5 * (fd.sign(fd.dot(uh, n)) + 1)
+    # if args.approx_type == 'avg':
+    #     uappx = fd.avg(u)
+    # else:
+    #     uappx = 0.5 * (fd.sign(fd.dot(uh, n)) + 1)
 
     def both(v):
-        """Is this right??""" # TODO: chekc this is right
         return 2*fd.avg(v)
 
     K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(F/h))*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))),uappx)*dS
+            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))),fd.avg(u))*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
 # Implicit midpoint rule
