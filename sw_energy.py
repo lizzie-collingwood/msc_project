@@ -233,7 +233,7 @@ etan.assign(h0 - H + b)
 # file_sw_data = fd.File(name+'.JSON') 
 # with open(name+'.json', 'w') as f:
 #     json.dump(mass, f)
-massdata = {t: fd.assemble(mass)}
+massdata = {t: [fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z)]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -255,15 +255,18 @@ while t < tmax + 0.5*dt:
 
     # Compute and print quantities that should be conserved
     _mass = fd.assemble(mass)
+    _energy = fd.assemble(energy)
+    _Q = fd.assemble(Q)
+    _Z = fd.assemble(Z)
     print("mass:", _mass)
-    print("energy:", fd.assemble(energy))
-    print("abs vorticity:", fd.assemble(Q))
-    print("enstrophy:", fd.assemble(Z))
+    print("energy:", _energy)
+    print("abs vorticity:", _Q)
+    print("enstrophy:", _Z)
 
     # Update field
     Un.assign(Unp1)
 
-    massdata.update({t: _mass})
+    massdata.update({t: [_mass, _energy, _Q, _Z]})
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
@@ -274,7 +277,7 @@ while t < tmax + 0.5*dt:
 
     itcount += nsolver.snes.getLinearSolveIterations() 
     nonlin_itcount += nsolver.snes.getIterations()
-    
+
 print(massdata)
 with open(name+'.json', 'w') as f:
     json.dump(massdata, f)
