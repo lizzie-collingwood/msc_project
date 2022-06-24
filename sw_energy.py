@@ -287,5 +287,8 @@ print(massdata)
 with open(name+'.json', 'w') as f:
     json.dump(massdata, f)
 
-PETSc.Sys.Print("Iterations", itcount, "dt", dt, "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
- "ref_level", args.ref_level, "dmax", args.dmax)
+PETSc.Sys.Print("Iterations", itcount,
+                "dt", dt, 
+                # "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
+                "ref_level", args.ref_level,
+                "dmax", args.dmax)
