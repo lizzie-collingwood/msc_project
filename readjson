@@ -6,45 +6,39 @@ plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 import cmasher as cmr
 colors = cmr.take_cmap_colors('winter', 6, return_fmt='hex')
-col1, col2, col3, col4, col5 = colors[1], colors[2], colors[3], colors[4], colors[5]
+
 
 # Opening JSON file
 f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/w5aug.json')
-  
-# Load JSON file
-data = json.load(f)
 
-# Extract the keys and values and concatenate
-times = np.asarray(list(data), dtype=float) / (3600*24)
-vals = np.asarray(list(data.values()), dtype=float)
-arr = np.r_['1,2,0', times, vals]
+def read_json(jsonfile):
+    """Read, load, and plot data held in JSON file: mass, energy, abs vorticity, and enstrophy."""
+    # Load JSON file
+    data = json.load(f)
+
+    # Extract the keys and values and concatenate
+    times = np.asarray(list(data), dtype=float) / (3600*24)
+    vals = np.asarray(list(data.values()), dtype=float)
+    return np.r_['1,2,0', times, vals]
+
+arr = read_json(jsonfile=f)
 
 # Plot the properties
-plt.figure()
-plt.plot(arr[1:, 0], arr[1:, 1], label="Mass", color=col1)
-plt.xlabel('Time (days)')
-plt.ylabel('Total Mass (kg)')
-plt.xticks(np.arange(16))
+def plot_property(colnum=1, ylab='Total Mass (kg)', days=15):
+    """Plots the property number colnum."""
+    plt.figure()
+    plt.plot(arr[1:, 0], arr[1:, colnum], color=colors[colnum])
+    plt.xlabel('Time (days)')
+    plt.ylabel(ylab)
+    plt.xticks(np.arange(days+1))
 
-plt.figure()
-plt.plot(arr[1:, 0], arr[1:, 2], label="Energy", color=col2)
-plt.xlabel('Time (days)')
-plt.ylabel('Total Energy (J)')
-plt.xticks(np.arange(16))
-
-plt.figure()
-plt.plot(arr[1:, 0], arr[1:, 3], label="Q", color=col3)
-plt.xlabel('Time (days)')
-plt.ylabel('Absolute Vorticity')
-plt.xticks(np.arange(16))
-
-plt.figure()
-plt.plot(arr[1:, 0], arr[1:, 4], label="Z", color=col4)
-plt.xlabel('Time (days)')
-plt.ylabel('Total Enstrophy')
-plt.xticks(np.arange(16))
+# Plot each of the properties
+plot_property(colnum=1, ylab='Total Mass (kg)')
+plot_property(colnum=2, ylab='Energy')
+plot_property(colnum=3, ylab='Absolute Vorticity')
+plot_property(colnum=4, ylab='Total enstrophy')
 
 plt.show()
-  
 # Close file
 f.close()
+
