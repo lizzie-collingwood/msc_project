@@ -13,7 +13,7 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours. Defa
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
-parser.add_argument('--approx_type', type=str, default='upwind', help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument('--upwind', type=str, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
 args = parser.parse_known_args()
 args = args[0]
@@ -72,6 +72,7 @@ def perp(u):
     """
     return fd.cross(outward_normals, u)
 
+
 # === Set up function spaces and mixed function space
 degree = args.degree # degree of FE space / complex
 V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # set up velocity space
@@ -113,10 +114,10 @@ def u_energy_op(v, u, F, h):
     n = fd.FacetNormal(mesh)
 
     # Compute approximation of u according to arg approx_type.
-    if args.approx_type == 'avg':
-        uappx = fd.avg(u)
-    else:
+    if args.approx_type:
         uappx = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
+    else:
+        uappx = fd.avg(u)
 
     def both(v):
         return 2*fd.avg(v)
