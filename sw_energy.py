@@ -140,11 +140,12 @@ def u_energy_op(v, u, F, h):
 # Construct components of poisson integrator FIXME: are these the half quantities?
 G = fd.inner(v, uh) + fd.inner(phi, hh)
 H = fd.inner(hh, g*(hh/2 + b) + 0.5*fd.inner(uh, uh))
+B = skewsym(degree)
 
 # Poisson integrator
 p_vel_eqn = (
     # fd.inner(v, u1 - u0)*dx
-    fd.grad(G)@skewsym(degree)@fd.grad(H)
+    fd.inner(fd.grad(G), fd.inner(B, fd.grad(H)))
     + u_energy_op(v, uh, F1, hh)
     # + phi*(h1 - h0)*dx
     + phi*fd.div(F1)*dx
