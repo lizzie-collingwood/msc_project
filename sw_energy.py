@@ -119,7 +119,7 @@ def u_energy_op(v, u, F, h):
     # Compute approximation of u according to arg approx_type.
     if args.upwind:
         up = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
-        uappx = both(up*u)
+        uappx = both(up*u) # FIXME: check this is right
     else:
         uappx = fd.avg(u)
 
