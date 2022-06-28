@@ -114,7 +114,7 @@ def u_energy_op(v, u, F, h):
     n = fd.FacetNormal(mesh)
 
     # Compute approximation of u according to arg approx_type.
-    if args.approx_type:
+    if args.upwind:
         uappx = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
     else:
         uappx = fd.avg(u)
