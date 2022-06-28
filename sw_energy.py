@@ -2,6 +2,7 @@ import firedrake as fd
 import json
 #get command arguments
 from petsc4py import PETSc
+import numpy as np
 PETSc.Sys.popErrorHandler()
 import argparse
 parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.')
@@ -107,14 +108,21 @@ K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
 # ========= Equations
+def skewsym(degree):
+    """Create skew-symmetric constant matrix B(U)."""
+    # FIXME: is there a matrix-free way to do this?
+    N = degree + 2
+    A = np.random.rand(N, N)
+    return np.tril(A) + np.tril(A, -1).T
+
 # Finite element variational forms of the 3-variable shallow water equations
 def u_energy_op(v, u, F, h):
     """"""
     dS = fd.dS
     n = fd.FacetNormal(mesh)
 
-    def both(v):
-        return 2*fd.avg(v)
+    def both(x):
+        return 2*fd.avg(x)
 
     # Compute approximation of u according to arg approx_type.
     if args.upwind:
@@ -129,12 +137,13 @@ def u_energy_op(v, u, F, h):
             + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))), uappx)*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
-# Implicit midpoint rule
+# Poisson integrator
 p_vel_eqn = (
-    fd.inner(v, u1 - u0)*dx
-    + dT*u_energy_op(v, uh, F1, hh)
-    + phi*(h1 - h0)*dx
-    + phi*dT*fd.div(F1)*dx
+    # fd.inner(v, u1 - u0)*dx
+    fd.grad(G)
+    + u_energy_op(v, uh, F1, hh)
+    # + phi*(h1 - h0)*dx
+    + phi*fd.div(F1)*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
