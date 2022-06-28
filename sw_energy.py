@@ -137,15 +137,14 @@ def u_energy_op(v, u, F, h):
             + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))), uappx)*dS
             - fd.div(v)*(g*(h + b) + K)*dx)
 
-# Construct components of poisson integrator
-psi = g*(hh + b) + 0.5*fd.inner(uh, uh)
-gradG = 
-gradH = 
+# Construct components of poisson integrator FIXME: are these the half quantities?
+G = fd.inner(v, uh) + fd.inner(phi, hh)
+H = fd.inner(hh, g*(hh/2 + b) + 0.5*fd.inner(uh, uh))
 
 # Poisson integrator
 p_vel_eqn = (
     # fd.inner(v, u1 - u0)*dx
-    gradG.T@skewsym(degree)@gradH
+    fd.grad(G).T@skewsym(degree)@fd.grad(H)
     + u_energy_op(v, uh, F1, hh)
     # + phi*(h1 - h0)*dx
     + phi*fd.div(F1)*dx
