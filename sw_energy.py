@@ -148,9 +148,10 @@ dD = dHdD(u0, u1, h0, h1, g)
 
 # Poisson integrator
 p_vel_eqn = (
-    # fd.inner(fd.grad(G), fd.inner(B, fd.grad(H)))*dx
-    + u_energy_op(v, uh, hh, du, dD)
-    + phi*fd.div(du)*dx
+    fd.inner(v, u1 - u0)*dx
+    + phi*(h1 - h0)*dx
+    + dT*u_energy_op(v, uh, hh, du, dD)
+    + phi*dT*fd.div(du)*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
