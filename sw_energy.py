@@ -114,11 +114,10 @@ def dHdu(u0, u1, D0, D1):
     """Compute the u-derivative of Hamiltonian."""
     return (D0*u0 + D0*u1/2 + D1*u0/2 + D1*u1)/3
 
-def dHdD(u0, u1, D0, D1, g):
+def dHdD(u0, u1, D0, D1, g, b):
     """Compute the D-derivative of Hamiltonian."""
     a = fd.inner(u0, u0) + fd.inner(u0, u1) + fd.inner(u1, u1)
-    b = g*((D1 + D0)/2 + b)
-    return a/6 + b
+    return a/6 + g*((D1 + D0)/2 + b)
 
 # Finite element variational forms of the 3-variable shallow water equations
 def u_energy_op(v, u, h, du, dD):
@@ -136,7 +135,7 @@ def u_energy_op(v, u, h, du, dD):
     else:
         uappx = fd.avg(u)
 
-    K = 0.5*fd.inner(u, u)
+    # K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(du)/h)*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(du)/h))), u)*dx
             + fd.inner(both(perp(n)*fd.inner(v, perp(du)/h)), uappx)*dS
@@ -144,7 +143,7 @@ def u_energy_op(v, u, h, du, dD):
 
 # Construct components of poisson integrator
 du = dHdu(u0, u1, h0, h1)
-dD = dHdD(u0, u1, h0, h1, g)
+dD = dHdD(u0, u1, h0, h1, g, b)
 
 # Poisson integrator
 p_vel_eqn = (
