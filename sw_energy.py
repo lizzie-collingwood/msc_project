@@ -19,6 +19,8 @@ parser.add_argument('--show_args', action='store_true', help='Output all the arg
 args = parser.parse_known_args()
 args = args[0]
 
+# numpy save using tofile - method of array, function fromfile to read in array, sep (default saves as binary, use sep=' ' saves as text file)
+
 if args.show_args:
     PETSc.Sys.Print(args)
 
@@ -108,15 +110,18 @@ K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
 # ========= Equations
-def skewsym(degree):
-    """Create skew-symmetric constant matrix B(U)."""
-    # FIXME: is there a matrix-free way to do this?
-    N = degree + 2
-    A = np.random.rand(N, N)
-    return np.tril(A) + np.tril(A, -1).T
+def dHdu(u0, u1, D0, D1):
+    """Compute the u-derivative of Hamiltonian."""
+    return (D0*u0 + D0*u1/2 + D1*u0/2 + D1*u1)/3
+
+def dHdD(u0, u1, D0, D1, g):
+    """Compute the D-derivative of Hamiltonian."""
+    a = fd.inner(u0, u0) + fd.inner(u0, u1) + fd.inner(u1, u1)
+    b = g*((D1 + D0)/2 + b)
+    return a/6 + b
 
 # Finite element variational forms of the 3-variable shallow water equations
-def u_energy_op(v, u, F, h):
+def u_energy_op(v, u, h, du, dD):
     """"""
     dS = fd.dS
     n = fd.FacetNormal(mesh)
@@ -132,21 +137,20 @@ def u_energy_op(v, u, F, h):
         uappx = fd.avg(u)
 
     K = 0.5*fd.inner(u, u)
-    return (fd.inner(v, f*perp(F/h))*dx
-            - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))), uappx)*dS
-            - fd.div(v)*(g*(h + b) + K)*dx)
+    return (fd.inner(v, f*perp(du)/h)*dx
+            - fd.inner(perp(fd.grad(fd.inner(v, perp(du)/h))), u)*dx
+            + fd.inner(both(perp(n)*fd.inner(v, perp(du)/h)), uappx)*dS
+            - fd.div(v)*dD*dx)
 
-# Construct components of poisson integrator FIXME: are these the half quantities?
-G = fd.inner(v, F1/hh) + fd.inner(phi, hh)
-H = fd.inner(hh, g*(hh/2 + b) + 0.5*fd.inner(F1/hh, F1/hh))
-B = skewsym(degree)
+# Construct components of poisson integrator
+du = dHdu(u0, u1, h0, h1)
+dD = dHdD(u0, u1, h0, h1, g)
 
 # Poisson integrator
 p_vel_eqn = (
-    fd.inner(fd.grad(G), fd.inner(B, fd.grad(H)))*dx
-    + u_energy_op(v, uh, F1, hh)
-    + phi*fd.div(F1)*dx
+    # fd.inner(fd.grad(G), fd.inner(B, fd.grad(H)))*dx
+    + u_energy_op(v, uh, hh, du, dD)
+    + phi*fd.div(du)*dx
     + fd.inner(w, F1 - hh*uh)*dx
     )
 
@@ -302,7 +306,6 @@ with open(name+'.json', 'w') as f:
     json.dump(simdata, f)
 
 PETSc.Sys.Print("Iterations", itcount,
-                "dt", dt, 
-                # "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
+                "dt", dt,
                 "ref_level", args.ref_level,
                 "dmax", args.dmax)
