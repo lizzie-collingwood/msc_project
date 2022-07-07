@@ -149,14 +149,14 @@ dD = dHdD(u0, u1, h0, h1, g, b)
 p_vel_eqn = (
     fd.inner(v, u1 - u0)*dx
     + phi*(h1 - h0)*dx
-    + dT*u_energy_op(v, uh, hh, du, dD)
-    + phi*dT*fd.div(du)*dx
-    + fd.inner(w, F1 - hh*uh)*dx
+    + dT*u_energy_op(v, uh, hh, F1, dD)
+    + phi*dT*fd.div(F1)*dx
+    + fd.inner(w, F1 - du)*dx
     )
 
 # Compute conserved quantities.
 mass = h0*dx
-energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
+energy = (h0*u0**2/2 + g*h0*(h0/2 - b))*dx
 
 # Tell petsce how to solve nonlinear equations
 mg_parameters = {
