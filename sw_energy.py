@@ -279,7 +279,7 @@ while t < tmax + 0.5*dt:
 
     # Get the number of linear iterations
     its = nsolver.snes.getLinearSolveIterations()
-    nonlin_its = nsolver.snes.get_IterationNumber()
+    nonlin_its = nsolver.snes.getIterationNumber()
 
     # Compute and print quantities that should be conserved
     _mass = fd.assemble(mass)
