@@ -165,7 +165,7 @@ mg_parameters = {
     "ksp_type": "fgmres", # ksp is the package of linear solvers - flexible GMRES
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
-    "ksp_atol": 1e-8, # conv test: measure of the absolute size of the residual norm
+    "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
     "ksp_rtol": 1e-8, # conv test: the decrease of the residual norm relative to the norm of the right hand side
     "ksp_max_it": 40, # cap the number of iterations
     "pc_type": "mg", # precontitioning method - geometric multigrid preconditioner (Newton-Krylov-multigrid method)
