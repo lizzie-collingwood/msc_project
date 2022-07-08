@@ -15,6 +15,7 @@ parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
 parser.add_argument('--upwind', type=str, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
 args = parser.parse_known_args()
 args = args[0]
@@ -120,7 +121,7 @@ def dHdD(u0, u1, D0, D1, g, b):
     return a/6 + g*((D1 + D0)/2 + b)
 
 # Finite element variational forms of the 3-variable shallow water equations
-def u_energy_op(v, u, h, du, dD):
+def u_energy_op(v, u, h, F, dD):
     """"""
     dS = fd.dS
     n = fd.FacetNormal(mesh)
@@ -135,10 +136,9 @@ def u_energy_op(v, u, h, du, dD):
     else:
         uappx = fd.avg(u)
 
-    # K = 0.5*fd.inner(u, u)
-    return (fd.inner(v, f*perp(du)/h)*dx
-            - fd.inner(perp(fd.grad(fd.inner(v, perp(du)/h))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(du)/h)), uappx)*dS
+    return (fd.inner(v, f*perp(F)/h)*dx
+            - fd.inner(perp(fd.grad(fd.inner(v, perp(F)/h))), u)*dx
+            + fd.inner(both(perp(n)*fd.inner(v, perp(F)/h)), uappx)*dS
             - fd.div(v)*dD*dx)
 
 # Construct components of poisson integrator
