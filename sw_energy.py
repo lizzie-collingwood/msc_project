@@ -257,7 +257,7 @@ etan.assign(h0 - H + b)
 # file_sw_data = fd.File(name+'.JSON') 
 # with open(name+'.json', 'w') as f:
 #     json.dump(mass, f)
-simdata = {t: [fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z)]}
+simdata = {t: [fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z), 0, 0]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -277,6 +277,10 @@ while t < tmax + 0.5*dt:
     # Solve for updated fields
     nsolver.solve()
 
+    # Get the number of linear iterations
+    its = nsolver.snes.getLinearSolveIterations()
+    nonlin_its = nsolver.snes.get_IterationNumber()
+
     # Compute and print quantities that should be conserved
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
@@ -290,7 +294,7 @@ while t < tmax + 0.5*dt:
     # Update field
     Un.assign(Unp1)
 
-    simdata.update({t: [_mass, _energy, _Q, _Z]})
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its]})
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
@@ -299,7 +303,7 @@ while t < tmax + 0.5*dt:
         file_sw.write(un, etan, qn)
         tdump -= dumpt
 
-    itcount += nsolver.snes.getLinearSolveIterations() 
+    itcount += its
     # nonlin_itcount += nsolver.snes.SNESGetIterationNumber() # FIXME: this is incorrect
 
 with open(name+'.json', 'w') as f:
