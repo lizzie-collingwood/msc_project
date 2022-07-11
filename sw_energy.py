@@ -15,6 +15,7 @@ parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
 parser.add_argument('--upwind', type=str, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
@@ -167,7 +168,7 @@ mg_parameters = {
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
     "snes_converged_reason": None, # print reason for convergence
-    "snes_rtol": 1e-8,
+    "snes_rtol": args.snes_rtol,
     "snes_atol": 1e-50,
     "snes_stol": 1e-50,
     "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
