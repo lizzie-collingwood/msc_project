@@ -167,6 +167,9 @@ mg_parameters = {
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
     "snes_converged_reason": None, # print reason for convergence
+    "snes_rtol": 1e-8,
+    "snes_atol": 1e-50,
+    "snes_stol": 1e-50,
     "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
     "ksp_rtol": args.rtol, # conv test: the decrease of the residual norm relative to the norm of the right hand side
     "ksp_max_it": 40, # cap the number of iterations
