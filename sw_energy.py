@@ -263,6 +263,7 @@ etan.assign(h0 - H + b)
 # with open(name+'.json', 'w') as f:
 #     json.dump(mass, f)
 simdata = {t: [fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z), 0, 0]}
+energy0 = fd.assemble(energy)
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -292,7 +293,7 @@ while t < tmax + 0.5*dt:
     _Q = fd.assemble(Q)
     _Z = fd.assemble(Z)
     print("mass:", _mass)
-    print("energy:", _energy)
+    print("energy:", energy0 - _energy)
     print("abs vorticity:", _Q)
     print("enstrophy:", _Z)
 
