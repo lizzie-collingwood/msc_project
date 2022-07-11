@@ -316,10 +316,10 @@ with open(name+'.json', 'w') as f:
     json.dump(simdata, f)
 
 # Write options to text file.
-allargs = parser.parse_args()
-options = vars(allargs)
+# allargs = parser.parse_args()
+# options = vars(allargs)
 with open(name+'_options.txt', 'w') as f:
-    f.write('\n'.join(list(options)))
+    f.write('\n'.join(args))
 
 PETSc.Sys.Print("Iterations", itcount,
                 "dt", dt,
