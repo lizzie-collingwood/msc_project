@@ -294,7 +294,7 @@ while t < tmax + 0.5*dt:
     _Q = fd.assemble(Q)
     _Z = fd.assemble(Z)
     print("mass:", _mass)
-    print("energy:", energy0 - _energy)
+    print("energy:", (energy0 - _energy)/energy0)
     print("abs vorticity:", _Q)
     print("enstrophy:", _Z)
 
