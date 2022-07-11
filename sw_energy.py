@@ -16,6 +16,7 @@ parser.add_argument('--coords_degree', type=int, default=1, help='Degree of poly
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
 parser.add_argument('--upwind', type=str, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
 args = parser.parse_known_args()
 args = args[0]
@@ -166,7 +167,7 @@ mg_parameters = {
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
     "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
-    "ksp_rtol": 1e-8, # conv test: the decrease of the residual norm relative to the norm of the right hand side
+    "ksp_rtol": args.rtol, # conv test: the decrease of the residual norm relative to the norm of the right hand side
     "ksp_max_it": 40, # cap the number of iterations
     "pc_type": "mg", # precontitioning method - geometric multigrid preconditioner (Newton-Krylov-multigrid method)
     "pc_mg_cycle_type": "v", # V-cycle
