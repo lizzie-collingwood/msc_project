@@ -168,7 +168,7 @@ mg_parameters = {
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
     "snes_converged_reason": None, # print reason for convergence
-    "snes_rtol": args.snes_rtol,
+    "snes_rtol": args.snes_rtol, # set convergence criterion; relative size of residual norm for nonlinear iterations
     "snes_atol": 1e-50,
     "snes_stol": 1e-50,
     "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
@@ -215,7 +215,7 @@ hdump = args.dumpt
 dumpt = hdump*60.*60.
 tdump = 0.
 
-# --- set up test case (15 days then 50)
+# --- set up test case
 x = fd.SpatialCoordinate(mesh)
 u_0 = 20.0
 u_max = fd.Constant(u_0) # maximum amplitude of the zonal wind [m/s]
@@ -311,10 +311,13 @@ while t < tmax + 0.5*dt:
         tdump -= dumpt
 
     itcount += its
-    # nonlin_itcount += nsolver.snes.SNESGetIterationNumber() # FIXME: this is incorrect
 
 with open(name+'.json', 'w') as f:
     json.dump(simdata, f)
+
+# Write options to text file.
+with open(name+'_options.txt', 'w') as f:
+    f.write('\n'.join(list(args)))
 
 PETSc.Sys.Print("Iterations", itcount,
                 "dt", dt,
