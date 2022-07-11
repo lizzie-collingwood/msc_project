@@ -158,7 +158,7 @@ p_vel_eqn = (
 
 # Compute conserved quantities.
 mass = h0*dx
-energy = (h0*u0**2/2 + g*h0*(h0/2 - b))*dx
+energy = (h0*fd.inner(u0, u0)/2 + g*h0*(h0/2 - b))*dx
 
 # Tell petsce how to solve nonlinear equations
 mg_parameters = {
