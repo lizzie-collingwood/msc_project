@@ -5,53 +5,71 @@ plt.style.use('ggplot')
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 import cmasher as cmr
-colors = cmr.take_cmap_colors('winter', 7, return_fmt='hex')
 
 
-_ex = {'base_level': 1, 'ref_level': 1, 'dmax': 1.0, 'dumpt': 24, 'dt': 1, 'filename': 'w5aug', 'coords_degree': 1, 'degree': 1, 'upwind': True, 'snes_rtol': 1e-08, 'atol': 1e-08, 'rtol': 1e-08, 'show_args': False}
+class AnalyseJson:
+    """TODO:"""
+    def __init__(self, file=None, dt=1):
+        self.dt = dt
+        if file is not None:
+            self.array = self.read_json(jsonfile=file)
 
-print('\n')
+    def read_json(self, jsonfile):
+        """Read, load, and plot data held in JSON file: mass, energy, abs vorticity, and enstrophy."""
+        # Load JSON file
+        data = json.load(jsonfile)
+
+        # Extract the keys and values and concatenate
+        times = np.asarray(list(data), dtype=float) / (3600*24)
+        vals = np.asarray(list(data.values()), dtype=float)
+        return np.r_['1,2,0', times, vals]
+
+    def plot_property(self, arr=None, colnum=1, ylab='Total Mass (kg)', days=15, cmap='winter'):
+        """Plots the property number colnum."""
+        # Set the colour scheme
+        colors = cmr.take_cmap_colors(cmap, 7, return_fmt='hex')
+
+        if arr is not None:
+            arr = self.array
+
+        plt.figure()
+        plt.plot(arr[1:, 0], arr[1:, colnum], color=colors[colnum])
+        plt.xlabel('Time (days)')
+        plt.ylabel(ylab)
+        plt.xticks(np.arange(days+1))
+
+    def multiplot(self, cmap='winter', colnum=1, **kwargs):
+        """Plot multiple json file data."""   
+        numj = len(kwargs)     
+        arrs = {}
+        for key, value in kwargs.items():
+            arr = self.read_json(jsonfile=value)
+            arrs.update({key: arr})
+            print(arr[-1, 0]/3600)
+
+        plt.figure()
+        for key, arr in arrs.items():
+            plt.plot(arr[1:, 0], arr[1:, colnum])
+            # plt.xticks(np.arange())
+
+        # print(arrs)
 
 
 # Opening JSON file
-# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/w5aug.json')
-# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/atol1en15/w5aug.json')
-f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/test/w5aug.json')
-# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
-# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/w5aug.json')
-# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/w5aug.json')
-# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/w5aug.json')
-
-def read_json(jsonfile):
-    """Read, load, and plot data held in JSON file: mass, energy, abs vorticity, and enstrophy."""
-    # Load JSON file
-    data = json.load(f)
-
-    # Extract the keys and values and concatenate
-    times = np.asarray(list(data), dtype=float) / (3600*24)
-    vals = np.asarray(list(data.values()), dtype=float)
-    return np.r_['1,2,0', times, vals]
-
-arr = read_json(jsonfile=f)
-
-# Plot the properties
-def plot_property(colnum=1, ylab='Total Mass (kg)', days=15):
-    """Plots the property number colnum."""
-    plt.figure()
-    plt.plot(arr[1:, 0], arr[1:, colnum], color=colors[colnum])
-    plt.xlabel('Time (days)')
-    plt.ylabel(ylab)
-    plt.xticks(np.arange(days+1))
+f1 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
+f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
+aj = AnalyseJson()
+aj.multiplot(json1=f1, json2=f2, cmap='cool')
 
 # Plot each of the properties
-plot_property(colnum=1, ylab='Total Mass (kg)')
-plot_property(colnum=2, ylab='Energy')
-plot_property(colnum=3, ylab='Absolute Vorticity')
-plot_property(colnum=4, ylab='Total enstrophy')
-plot_property(colnum=5, ylab='Linear Iterations')
-plot_property(colnum=6, ylab='Nonlinear Iterations')
+# aj.plot_property(colnum=1, ylab='Total Mass (kg)')
+# aj.plot_property(colnum=2, ylab='Energy')
+# aj.plot_property(colnum=3, ylab='Absolute Vorticity')
+# aj.plot_property(colnum=4, ylab='Total enstrophy')
+# aj.plot_property(colnum=5, ylab='Linear Iterations')
+# aj.plot_property(colnum=6, ylab='Nonlinear Iterations')
 
-plt.show()
+# plt.show()
 # Close file
-f.close()
+# f.close()
 
