@@ -263,8 +263,8 @@ etan.assign(h0 - H + b)
 # file_sw_data = fd.File(name+'.JSON') 
 # with open(name+'.json', 'w') as f:
 #     json.dump(mass, f)
-simdata = {t: [fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z), 0, 0]}
 energy0 = fd.assemble(energy)
+simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -294,7 +294,7 @@ while t < tmax + 0.5*dt:
     _Q = fd.assemble(Q)
     _Z = fd.assemble(Z)
     print("mass:", _mass)
-    print("energy:", (energy0 - _energy)/energy0)
+    print("energy:", (energy0 - _energy) / energy0)
     print("abs vorticity:", _Q)
     print("enstrophy:", _Z)
 
@@ -312,6 +312,7 @@ while t < tmax + 0.5*dt:
 
     itcount += its
 
+# Save the performance and solution data to json.
 with open(name+'.json', 'w') as f:
     json.dump(simdata, f)
 
