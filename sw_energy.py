@@ -19,7 +19,7 @@ parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute si
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
-parser.add_argument('--poisson', type=bool, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
+parser.add_argument('--poisson', action='store_true', help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
 args = parser.parse_known_args()
 args = args[0]
 
