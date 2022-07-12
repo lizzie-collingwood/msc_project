@@ -105,10 +105,10 @@ dx = fd.dx
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
-u0, h0, F0 = fd.split(Un)
-u1, h1, F1 = fd.split(Unp1)
+u0, D0, F0 = fd.split(Un)
+u1, D1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
-hh = 0.5*(h0 + h1)
+Dh = 0.5*(D0 + D1)
 
 dT = fd.Constant(0.)
 
@@ -123,7 +123,7 @@ def dHdD(u0, u1, D0, D1):
     return a/6 + g*((D1 + D0)/2 + b)
 
 # Finite element variational forms of the 3-variable shallow water equations
-def u_energy_op(v, u, h, F, dD):
+def u_energy_op(v, u, D, F, dD):
     """"""
     dS = fd.dS
     n = fd.FacetNormal(mesh)
@@ -138,31 +138,31 @@ def u_energy_op(v, u, h, F, dD):
     else:
         uappx = fd.avg(u)
 
-    return (fd.inner(v, f*perp(F/h))*dx
-            - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))), uappx)*dS
+    return (fd.inner(v, f*perp(F/D))*dx
+            - fd.inner(perp(fd.grad(fd.inner(v, perp(F/D)))), u)*dx
+            + fd.inner(both(perp(n)*fd.inner(v, perp(F/D))), uappx)*dS
             - fd.div(v)*dD*dx)
 
 # Construct components of poisson integrator (/ implicit midpoint)
 if args.poisson:
-    du = dHdu(u0, u1, h0, h1)
-    dD = dHdD(u0, u1, h0, h1)
+    du = dHdu(u0, u1, D0, D1)
+    dD = dHdD(u0, u1, D0, D1)
 else:
-    du = hh*uh
-    dD = g*(hh + b) + 0.5*fd.inner(uh, uh)
+    du = Dh*uh
+    dD = g*(Dh + b) + 0.5*fd.inner(uh, uh)
 
 # Poisson integrator
 p_vel_eqn = (
     fd.inner(v, u1 - u0)*dx
-    + phi*(h1 - h0)*dx
-    + dT*u_energy_op(v, uh, hh, F1, dD)
+    + phi*(D1 - D0)*dx
+    + dT*u_energy_op(v, uh, Dh, F1, dD)
     + phi*dT*fd.div(F1)*dx
     + fd.inner(w, F1 - du)*dx
     )
 
 # Compute conserved quantities.
-mass = h0*dx
-energy = (h0*fd.inner(u0, u0)/2 + g*h0*(h0/2 + b))*dx
+mass = D0*dx
+energy = (D0*fd.inner(u0, u0)/2 + g*D0*(D0/2 + b))*dx
 
 # Tell petsce how to solve nonlinear equations
 mg_parameters = {
@@ -240,9 +240,9 @@ bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
 # Initial conditions
-u0, h0, F0 = Un.split()
+u0, D0, F0 = Un.split()
 u0.assign(un)
-h0.assign(etan + H - b)
+D0.assign(etan + H - b)
 
 # Compute potential vorticity using solvers
 q = fd.TrialFunction(V0)
@@ -256,12 +256,12 @@ qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
 # Compute absolute vorticity and enstrophy
-Q = hh*qn*dx
-Z = hh*qn**2*dx
+Q = Dh*qn*dx
+Z = Dh*qn**2*dx
 
 # Write initial fields into a file which can be interpreted by software ParaView
 file_sw = fd.File(name+'.pvd')
-etan.assign(h0 - H + b)
+etan.assign(D0 - H + b)
 
 # # Write new file to hold solver data
 # file_sw_data = fd.File(name+'.JSON') 
@@ -273,7 +273,7 @@ simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0]
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
-F0.project(u0*h0)
+F0.project(u0*D0)
 file_sw.write(un, etan, qn)
 Unp1.assign(Un)
 
@@ -308,7 +308,7 @@ while t < tmax + 0.5*dt:
     simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its]})
 
     if tdump > dumpt - dt*0.5:
-        etan.assign(h0 - H + b)
+        etan.assign(D0 - H + b)
         un.assign(u0)
         qsolver.solve()
         file_sw.write(un, etan, qn)
