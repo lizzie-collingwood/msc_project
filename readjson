@@ -5,11 +5,20 @@ plt.style.use('ggplot')
 plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 import cmasher as cmr
-colors = cmr.take_cmap_colors('winter', 6, return_fmt='hex')
+colors = cmr.take_cmap_colors('winter', 7, return_fmt='hex')
+
+
+_ex = {'base_level': 1, 'ref_level': 1, 'dmax': 1.0, 'dumpt': 24, 'dt': 1, 'filename': 'w5aug', 'coords_degree': 1, 'degree': 1, 'upwind': True, 'snes_rtol': 1e-08, 'atol': 1e-08, 'rtol': 1e-08, 'show_args': False}
+
+print('\n')
 
 
 # Opening JSON file
-f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/w5aug.json')
+# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/w5aug.json')
+# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/atol1en15/w5aug.json')
+f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/test/w5aug.json')
+# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
+# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/w5aug.json')
 # f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/w5aug.json')
 # f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/w5aug.json')
 
@@ -39,6 +48,8 @@ plot_property(colnum=1, ylab='Total Mass (kg)')
 plot_property(colnum=2, ylab='Energy')
 plot_property(colnum=3, ylab='Absolute Vorticity')
 plot_property(colnum=4, ylab='Total enstrophy')
+plot_property(colnum=5, ylab='Linear Iterations')
+plot_property(colnum=6, ylab='Nonlinear Iterations')
 
 plt.show()
 # Close file
