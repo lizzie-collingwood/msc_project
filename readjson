@@ -1,5 +1,6 @@
 import json
 import ast
+from pkgutil import extend_path
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -43,9 +44,8 @@ class AnalyseJson:
         plt.ylabel(ylab)
         plt.xticks(np.arange(days+1))
 
-    def multiplot(self, cmap='winter', colnum=1, ylab='Total mass (kg)', **kwargs):
-        """Plot multiple json file data."""   
-        numj = len(kwargs)     
+    def extract(self, kwargs):
+        """Extract the data and options info from json files."""
         arrs, ops = {}, []
         for key, value in kwargs.items():
             arr, op = self.read_json(jsonfile=value)
@@ -54,7 +54,11 @@ class AnalyseJson:
 
         # Combine the option data into one dict.
         ops = {k: [d[k] for d in ops] for k in ops[0]}
+        return arrs, ops
 
+    def multiplot(self, cmap='winter', colnum=1, ylab='Total mass (kg)',        **kwargs):
+        """Plot multiple json file data."""
+        arrs, ops = self.extract(kwargs)
 
         plt.figure()
         plt.xlabel('Time (days)')
