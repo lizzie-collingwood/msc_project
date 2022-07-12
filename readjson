@@ -1,3 +1,4 @@
+from cProfile import label
 import json
 import ast
 from pkgutil import extend_path
@@ -11,6 +12,8 @@ import cmasher as cmr
 
 class AnalyseJson:
     """TODO:"""
+    # TODO: add dict for colnums
+
     def __init__(self, file=None, dt=1):
         self.dt = dt
         if file is not None:
@@ -60,30 +63,47 @@ class AnalyseJson:
         """Finds the test parameters given ops."""
 
         print(ops)
-        for key, vals in ops.items():
-            if vals # TODO: check for lists with different values - then make note of these keys and use a dict to work out what to write as the data labels etc from this
+        tp, labels = [], []
+        out = []
+        for k, vals in ops.items():
+            if len(set(vals))>1:
+                tp.append(k)
+                labels.append(vals)
+                labs = list(map(str, vals))
+
+                if len(out)==0:
+                    out = [k+': '+l for l in labs]
+                else:
+                    out = [out[i]+', '+k+': '+labs[i] for i in range(len(labs))]
+                    
+                # TODO: check for lists with different values - then make note of these keys and use a dict to work out what to write as the data labels etc from this
+
+        return tp, out
 
     def multiplot(self, cmap='winter', colnum=1, ylab='Total mass (kg)',        **kwargs):
         """Plot multiple json file data."""
         arrs, ops = self.extract(kwargs)
 
         x = self.find_test_parameters(ops)
+        tp, labels = self.find_test_parameters(ops)
+        print(labels)
 
         plt.figure()
+        for i, (_, arr) in enumerate(arrs.items()):
+            plt.plot(arr[1:, 0], arr[1:, colnum], label=labels[i])
+            
+        # Formatting
         plt.xlabel('Time (days)')
         plt.ylabel(ylab)
-        for key, arr in arrs.items():
-            plt.plot(arr[1:, 0], arr[1:, colnum])
-            
         dmax = max(ops['dmax'])
         plt.xticks(np.arange(dmax+1))
+        plt.legend()
 
 
 
 # Opening JSON file
 f1 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
-f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/w5aug.json')
-# f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
+f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/w5aug.json')
 aj = AnalyseJson()
 aj.multiplot(json1=f1, json2=f2, cmap='cool')
 
