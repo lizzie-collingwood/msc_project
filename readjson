@@ -1,4 +1,5 @@
 import json
+import ast
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -12,19 +13,23 @@ class AnalyseJson:
     def __init__(self, file=None, dt=1):
         self.dt = dt
         if file is not None:
-            self.array = self.read_json(jsonfile=file)
+            self.array, self.options = self.read_json(jsonfile=file)
 
     def read_json(self, jsonfile):
         """Read, load, and plot data held in JSON file: mass, energy, abs vorticity, and enstrophy."""
         # Load JSON file
-        data = json.load(jsonfile)
+        jsondata = json.load(jsonfile)
+
+        # Extract the option information
+        options = jsondata['options']
 
         # Extract the keys and values and concatenate
+        data = jsondata['data']
         times = np.asarray(list(data), dtype=float) / (3600*24)
         vals = np.asarray(list(data.values()), dtype=float)
-        return np.r_['1,2,0', times, vals]
+        return np.r_['1,2,0', times, vals], options
 
-    def plot_property(self, arr=None, colnum=1, ylab='Total Mass (kg)', days=15, cmap='winter'):
+    def plot_property(self, arr=None, colnum=1, ylab='Total mass (kg)', days=15, cmap='winter'):
         """Plots the property number colnum."""
         # Set the colour scheme
         colors = cmr.take_cmap_colors(cmap, 7, return_fmt='hex')
@@ -38,26 +43,34 @@ class AnalyseJson:
         plt.ylabel(ylab)
         plt.xticks(np.arange(days+1))
 
-    def multiplot(self, cmap='winter', colnum=1, **kwargs):
+    def multiplot(self, cmap='winter', colnum=1, ylab='Total mass (kg)', **kwargs):
         """Plot multiple json file data."""   
         numj = len(kwargs)     
-        arrs = {}
+        arrs, ops = {}, []
         for key, value in kwargs.items():
-            arr = self.read_json(jsonfile=value)
+            arr, op = self.read_json(jsonfile=value)
             arrs.update({key: arr})
-            print(arr[-1, 0]/3600)
+            ops.append(ast.literal_eval(op))
+
+        # Combine the option data into one dict.
+        ops = {k: [d[k] for d in ops] for k in ops[0]}
+
 
         plt.figure()
+        plt.xlabel('Time (days)')
+        plt.ylabel(ylab)
         for key, arr in arrs.items():
             plt.plot(arr[1:, 0], arr[1:, colnum])
-            # plt.xticks(np.arange())
+            
+        dmax = max(ops['dmax'])
+        plt.xticks(np.arange(dmax+1))
 
-        # print(arrs)
 
 
 # Opening JSON file
 f1 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
-f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
+f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/w5aug.json')
+# f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/w5aug.json')
 aj = AnalyseJson()
 aj.multiplot(json1=f1, json2=f2, cmap='cool')
 
@@ -69,7 +82,7 @@ aj.multiplot(json1=f1, json2=f2, cmap='cool')
 # aj.plot_property(colnum=5, ylab='Linear Iterations')
 # aj.plot_property(colnum=6, ylab='Nonlinear Iterations')
 
-# plt.show()
+plt.show()
 # Close file
 # f.close()
 
