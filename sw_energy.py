@@ -2,7 +2,8 @@ import firedrake as fd
 import json
 #get command arguments
 from petsc4py import PETSc
-import numpy as np
+# import numpy as np
+from distutils.util import strtobool
 PETSc.Sys.popErrorHandler()
 import argparse
 parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.')
@@ -19,7 +20,9 @@ parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute si
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
-parser.add_argument('--poisson', choices=(True, False), help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
+# parser.add_argument('--poisson', choices=(True, False), help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
+parser.add_argument("--poisson", type=lambda x:bool(strtobool(x)),
+    nargs='?', const=True, default=False)
 args = parser.parse_known_args()
 args = args[0]
 
