@@ -56,9 +56,18 @@ class AnalyseJson:
         ops = {k: [d[k] for d in ops] for k in ops[0]}
         return arrs, ops
 
+    def find_test_parameters(self, ops):
+        """Finds the test parameters given ops."""
+
+        print(ops)
+        for key, vals in ops.items():
+            if vals # TODO: check for lists with different values - then make note of these keys and use a dict to work out what to write as the data labels etc from this
+
     def multiplot(self, cmap='winter', colnum=1, ylab='Total mass (kg)',        **kwargs):
         """Plot multiple json file data."""
         arrs, ops = self.extract(kwargs)
+
+        x = self.find_test_parameters(ops)
 
         plt.figure()
         plt.xlabel('Time (days)')
@@ -86,7 +95,7 @@ aj.multiplot(json1=f1, json2=f2, cmap='cool')
 # aj.plot_property(colnum=5, ylab='Linear Iterations')
 # aj.plot_property(colnum=6, ylab='Nonlinear Iterations')
 
-plt.show()
+# plt.show()
 # Close file
 # f.close()
 
