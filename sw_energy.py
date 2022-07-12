@@ -15,12 +15,12 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours. Defa
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
-parser.add_argument('--upwind', type=bool, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument("--upwind", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
 parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
-parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=False, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
 args = parser.parse_known_args()
 args = args[0]
 
