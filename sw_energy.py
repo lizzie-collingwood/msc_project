@@ -318,12 +318,13 @@ while t < tmax + 0.5*dt:
     itcount += its
 
 # Save the performance and solution data to json.
+argdict = str(vars(args))
 with open(name+'.json', 'w') as f:
-    json.dump(simdata, f)
+    json.dump({'options': argdict, 'data': simdata}, f)
 
 # Write options to text file.
 with open(name+'_options.txt', 'w') as f:
-    f.write(str(vars(args)))
+    f.write(argdict)
 
 PETSc.Sys.Print("Iterations", itcount,
                 "dt", dt,
