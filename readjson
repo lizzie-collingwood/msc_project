@@ -1,7 +1,5 @@
-from cProfile import label
 import json
 import ast
-from pkgutil import extend_path
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -11,7 +9,7 @@ import cmasher as cmr
 
 
 class AnalyseJson:
-    """TODO:"""
+    """Opens and extracts data and info from the json output of sw_energy.py."""
     column_dict = {
         1: {'ylab': 'Total mass (kg)'},
         2: {'ylab': 'Energy'},
@@ -28,8 +26,7 @@ class AnalyseJson:
         'atol': {'rename': 'Linear stopping criteration: absolute residual norm'},
     }
 
-    def __init__(self, file=None, dt=1):
-        self.dt = dt
+    def __init__(self, file=None):
         if file is not None:
             self.array, self.options = self.read_json(jsonfile=file)
 
@@ -61,11 +58,9 @@ class AnalyseJson:
 
     def find_test_parameters(self, ops):
         """Finds the test parameters given ops."""
-        tp, labels = [], []
         out = []
         for k, vals in ops.items():
             if len(set(vals))>1:
-                tp.append(k)
                 labs = list(map(str, vals))
                 K = k + ': '
                 try:
@@ -85,6 +80,9 @@ class AnalyseJson:
 
     def multiplot(self, cmap='winter', colnum=1, **kwargs):
         """Plot multiple json file data."""
+        # Set the colour scheme
+        colours = cmr.take_cmap_colors(cmap, len(kwargs), return_fmt='hex')
+
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(ops)
@@ -92,7 +90,7 @@ class AnalyseJson:
         # Plot the json data
         plt.figure()
         for i, (_, arr) in enumerate(arrs.items()):
-            plt.plot(arr[1:, 0], arr[1:, colnum], label=labels[i])
+            plt.plot(arr[1:, 0], arr[1:, colnum], label=labels[i], color=colours[colnum])
             
         # Formatting
         plt.xlabel('Time (days)')
@@ -101,7 +99,6 @@ class AnalyseJson:
         plt.xticks(np.arange(dmax+1))
         if len(kwargs)>1: plt.legend()
         plt.show()
-
 
 
 # Locate JSON files
