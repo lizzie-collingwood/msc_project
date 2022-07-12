@@ -2,6 +2,7 @@ import firedrake as fd
 import json
 #get command arguments
 from petsc4py import PETSc
+import numpy as np
 PETSc.Sys.popErrorHandler()
 import argparse
 parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.')
@@ -13,10 +14,16 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours. Defa
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
-parser.add_argument('--upwind', type=str, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument('--upwind', type=bool, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
+parser.add_argument('--poisson', type=bool, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
 args = parser.parse_known_args()
 args = args[0]
+
+# numpy save using tofile - method of array, function fromfile to read in array, sep (default saves as binary, use sep=' ' saves as text file)
 
 if args.show_args:
     PETSc.Sys.Print(args)
@@ -103,18 +110,26 @@ u1, h1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
 hh = 0.5*(h0 + h1)
 
-K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
 # ========= Equations
+def dHdu(u0, u1, D0, D1):
+    """Compute the u-derivative of Hamiltonian."""
+    return (D0*u0 + D0*u1/2 + D1*u0/2 + D1*u1)/3
+
+def dHdD(u0, u1, D0, D1):
+    """Compute the D-derivative of Hamiltonian."""
+    a = fd.inner(u0, u0) + fd.inner(u0, u1) + fd.inner(u1, u1)
+    return a/6 + g*((D1 + D0)/2 + b)
+
 # Finite element variational forms of the 3-variable shallow water equations
-def u_energy_op(v, u, F, h):
+def u_energy_op(v, u, h, F, dD):
     """"""
     dS = fd.dS
     n = fd.FacetNormal(mesh)
 
-    def both(v):
-        return 2*fd.avg(v)
+    def both(x):
+        return 2*fd.avg(x)
 
     # Compute approximation of u according to arg approx_type.
     if args.upwind:
@@ -123,24 +138,31 @@ def u_energy_op(v, u, F, h):
     else:
         uappx = fd.avg(u)
 
-    K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(F/h))*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
             + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))), uappx)*dS
-            - fd.div(v)*(g*(h + b) + K)*dx)
+            - fd.div(v)*dD*dx)
 
-# Implicit midpoint rule
+# Construct components of poisson integrator (/ implicit midpoint)
+if args.poisson:
+    du = dHdu(u0, u1, h0, h1)
+    dD = dHdD(u0, u1, h0, h1)
+else:
+    du = hh*uh
+    dD = g*(hh + b) + 0.5*fd.inner(uh, uh)
+
+# Poisson integrator
 p_vel_eqn = (
     fd.inner(v, u1 - u0)*dx
-    + dT*u_energy_op(v, uh, F1, hh)
     + phi*(h1 - h0)*dx
+    + dT*u_energy_op(v, uh, hh, F1, dD)
     + phi*dT*fd.div(F1)*dx
-    + fd.inner(w, F1 - hh*uh)*dx
+    + fd.inner(w, F1 - du)*dx
     )
 
 # Compute conserved quantities.
 mass = h0*dx
-energy = (h0*u0**2 + g*h0*(h0/2 - b))*dx
+energy = (h0*fd.inner(u0, u0)/2 + g*h0*(h0/2 + b))*dx
 
 # Tell petsce how to solve nonlinear equations
 mg_parameters = {
@@ -149,8 +171,12 @@ mg_parameters = {
     "ksp_type": "fgmres", # ksp is the package of linear solvers - flexible GMRES
     "ksp_monitor_true_residual": None, # print the residual after each iteration
     "ksp_converged_reason": None, # print reason for convergence
-    "ksp_atol": 1e-8, # conv test: measure of the absolute size of the residual norm
-    "ksp_rtol": 1e-8, # conv test: the decrease of the residual norm relative to the norm of the right hand side
+    "snes_converged_reason": None, # print reason for convergence
+    "snes_rtol": args.snes_rtol, # set convergence criterion; relative size of residual norm for nonlinear iterations
+    "snes_atol": 1e-50,
+    "snes_stol": 1e-50,
+    "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
+    "ksp_rtol": args.rtol, # conv test: the decrease of the residual norm relative to the norm of the right hand side
     "ksp_max_it": 40, # cap the number of iterations
     "pc_type": "mg", # precontitioning method - geometric multigrid preconditioner (Newton-Krylov-multigrid method)
     "pc_mg_cycle_type": "v", # V-cycle
@@ -193,7 +219,7 @@ hdump = args.dumpt
 dumpt = hdump*60.*60.
 tdump = 0.
 
-# --- set up test case (15 days then 50)
+# --- set up test case
 x = fd.SpatialCoordinate(mesh)
 u_0 = 20.0
 u_max = fd.Constant(u_0) # maximum amplitude of the zonal wind [m/s]
@@ -241,7 +267,8 @@ etan.assign(h0 - H + b)
 # file_sw_data = fd.File(name+'.JSON') 
 # with open(name+'.json', 'w') as f:
 #     json.dump(mass, f)
-simdata = {t: [fd.assemble(mass), fd.assemble(energy), fd.assemble(Q), fd.assemble(Z)]}
+energy0 = fd.assemble(energy)
+simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -261,20 +288,24 @@ while t < tmax + 0.5*dt:
     # Solve for updated fields
     nsolver.solve()
 
+    # Get the number of linear iterations
+    its = nsolver.snes.getLinearSolveIterations()
+    nonlin_its = nsolver.snes.getIterationNumber()
+
     # Compute and print quantities that should be conserved
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
     _Q = fd.assemble(Q)
     _Z = fd.assemble(Z)
     print("mass:", _mass)
-    print("energy:", _energy)
+    print("energy:", (energy0 - _energy) / energy0)
     print("abs vorticity:", _Q)
     print("enstrophy:", _Z)
 
     # Update field
     Un.assign(Unp1)
 
-    simdata.update({t: [_mass, _energy, _Q, _Z]})
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its]})
 
     if tdump > dumpt - dt*0.5:
         etan.assign(h0 - H + b)
@@ -283,14 +314,17 @@ while t < tmax + 0.5*dt:
         file_sw.write(un, etan, qn)
         tdump -= dumpt
 
-    itcount += nsolver.snes.getLinearSolveIterations() 
-    # nonlin_itcount += nsolver.snes.SNESGetIterationNumber() # FIXME: this is incorrect
+    itcount += its
 
+# Save the performance and solution data to json.
 with open(name+'.json', 'w') as f:
     json.dump(simdata, f)
 
+# Write options to text file.
+with open(name+'_options.txt', 'w') as f:
+    f.write(str(vars(args)))
+
 PETSc.Sys.Print("Iterations", itcount,
-                "dt", dt, 
-                # "tlblock", args.tlblock, # FIXME: doesn't recognise tlblock
+                "dt", dt,
                 "ref_level", args.ref_level,
                 "dmax", args.dmax)

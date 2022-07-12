@@ -9,7 +9,9 @@ colors = cmr.take_cmap_colors('winter', 6, return_fmt='hex')
 
 
 # Opening JSON file
-f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/w5aug.json')
+f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/w5aug.json')
+# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/w5aug.json')
+# f = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/w5aug.json')
 
 def read_json(jsonfile):
     """Read, load, and plot data held in JSON file: mass, energy, abs vorticity, and enstrophy."""
