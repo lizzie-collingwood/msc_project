@@ -19,6 +19,7 @@ parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute si
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
+parser.add_argument('--poisson', type=bool, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
 args = parser.parse_known_args()
 args = args[0]
 
@@ -109,7 +110,6 @@ u1, h1, F1 = fd.split(Unp1)
 uh = 0.5*(u0 + u1)
 hh = 0.5*(h0 + h1)
 
-K = 0.5*fd.inner(uh, uh)
 dT = fd.Constant(0.)
 
 # ========= Equations
@@ -117,7 +117,7 @@ def dHdu(u0, u1, D0, D1):
     """Compute the u-derivative of Hamiltonian."""
     return (D0*u0 + D0*u1/2 + D1*u0/2 + D1*u1)/3
 
-def dHdD(u0, u1, D0, D1, g, b):
+def dHdD(u0, u1, D0, D1):
     """Compute the D-derivative of Hamiltonian."""
     a = fd.inner(u0, u0) + fd.inner(u0, u1) + fd.inner(u1, u1)
     return a/6 + g*((D1 + D0)/2 + b)
@@ -138,14 +138,18 @@ def u_energy_op(v, u, h, F, dD):
     else:
         uappx = fd.avg(u)
 
-    return (fd.inner(v, f*perp(F)/h)*dx
-            - fd.inner(perp(fd.grad(fd.inner(v, perp(F)/h))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(F)/h)), uappx)*dS
+    return (fd.inner(v, f*perp(F/h))*dx
+            - fd.inner(perp(fd.grad(fd.inner(v, perp(F/h)))), u)*dx
+            + fd.inner(both(perp(n)*fd.inner(v, perp(F/h))), uappx)*dS
             - fd.div(v)*dD*dx)
 
-# Construct components of poisson integrator
-du = dHdu(u0, u1, h0, h1)
-dD = dHdD(u0, u1, h0, h1, g, b)
+# Construct components of poisson integrator (/ implicit midpoint)
+if args.poisson:
+    du = dHdu(u0, u1, h0, h1)
+    dD = dHdD(u0, u1, h0, h1)
+else:
+    du = hh*uh
+    dD = g*(hh + b) + 0.5*fd.inner(uh, uh)
 
 # Poisson integrator
 p_vel_eqn = (
