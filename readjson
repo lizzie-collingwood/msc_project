@@ -12,7 +12,6 @@ import cmasher as cmr
 
 class AnalyseJson:
     """TODO:"""
-    # TODO: add dict for colnums
     column_dict = {
         1: {'ylab': 'Total mass (kg)'},
         2: {'ylab': 'Energy'},
@@ -21,8 +20,8 @@ class AnalyseJson:
         5: {'ylab': 'Linear iterations'},
         6: {'ylab': 'Nonlinear iterations'},}
     leg_dict = {
-        'poisson': {'rename': '', 'options': {'True': 'Poisson Integrator', 'False': 'Implicit Midpoint Rule'}},
-        'upwind': {'rename': '', 'options': {'True': 'Upwinding', 'False': 'Averaging'}},
+        'poisson': {'rename': '', 'options': {'True': 'PI', 'False': 'IMR'}},
+        'upwind': {'rename': '', 'options': {'True': 'Upwind', 'False': 'Average'}},
         'dt': {'rename': 'Time step (hours)'},
         'snes_rtol': {'rename': 'Nonlinear stopping criteration: relative residual norm'},
         'rtol': {'rename': 'Linear stopping criteration: relative residual norm'},
@@ -48,20 +47,6 @@ class AnalyseJson:
         vals = np.asarray(list(data.values()), dtype=float)
         return np.r_['1,2,0', times, vals], options
 
-    def plot_property(self, arr=None, colnum=1, ylab='Total mass (kg)', days=15, cmap='winter'):
-        """Plots the property number colnum."""
-        # Set the colour scheme
-        colors = cmr.take_cmap_colors(cmap, 7, return_fmt='hex')
-
-        if arr is not None:
-            arr = self.array
-
-        plt.figure()
-        plt.plot(arr[1:, 0], arr[1:, colnum], color=colors[colnum])
-        plt.xlabel('Time (days)')
-        plt.ylabel(ylab)
-        plt.xticks(np.arange(days+1))
-
     def extract(self, kwargs):
         """Extract the data and options info from json files."""
         arrs, ops = {}, []
@@ -81,7 +66,6 @@ class AnalyseJson:
         for k, vals in ops.items():
             if len(set(vals))>1:
                 tp.append(k)
-                labels.append(vals)
                 labs = list(map(str, vals))
                 K = k + ': '
                 try:
@@ -95,18 +79,17 @@ class AnalyseJson:
                     out = [K+l for l in labs]
                 else:
                     out = [out[i]+', '+K+labs[i] for i in range(len(labs))]
-
-        return tp, out
+        
+        if len(out)==0: out = [' ']
+        return out
 
     def multiplot(self, cmap='winter', colnum=1, **kwargs):
         """Plot multiple json file data."""
+        # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
+        labels = self.find_test_parameters(ops)
 
-        # Get labels
-        tp, labels = self.find_test_parameters(ops)
-        # print(ops)
-        # print(labels)
-
+        # Plot the json data
         plt.figure()
         for i, (_, arr) in enumerate(arrs.items()):
             plt.plot(arr[1:, 0], arr[1:, colnum], label=labels[i])
@@ -116,17 +99,20 @@ class AnalyseJson:
         plt.ylabel(self.column_dict[colnum]['ylab'])
         dmax = max(ops['dmax'])
         plt.xticks(np.arange(dmax+1))
-        plt.legend()
+        if len(kwargs)>1: plt.legend()
+        plt.show()
 
 
 
-# Opening JSON file
+# Locate JSON files
 f1 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json')
 f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/upwind/w5aug.json')
 f3 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/w5aug.json')
+
+# Initialise class and implement method
 aj = AnalyseJson()
-aj.multiplot(j1=f1, j2=f2, j3=f3, colnum=2, cmap='cool')
 
+# aj.multiplot(j1=f1, j2=f2, j3=f3, colnum=2, cmap='cool')
+aj.multiplot(j1=f1, colnum=2, cmap='cool')
 
-plt.show()
 
