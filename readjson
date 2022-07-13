@@ -59,7 +59,11 @@ class AnalyseJson:
         return arrs, ops
 
     def find_test_parameters(self, ops):
-        """Finds the test parameters given options dict."""
+        """
+        Finds the test parameters given options dict.
+        :param ops: dict, contains the parser arg output from sw_energy.py.
+        :return out: outputs the labels of the datasets in terms of the test parameter(s).
+        """
         out = []
         for k, vals in ops.items():
             if len(set(vals))>1:
@@ -86,7 +90,13 @@ class AnalyseJson:
         return (slice - slice[0]) / slice[0]
 
     def multiplot(self, normalise=True, semilog=True, cmap='winter', colnum=1, **kwargs):
-        """Plot multiple json file data."""
+        """
+        Plot multiple json file data.
+        :param kwargs: any number of strings describing path to json files.
+        :param normalise: bool, whether to normalise the data according to initial value.
+        :param semilog: bool, whether to scale the y axis using semilog.
+        :param colnum: int, identifies which column of the output array to plot.
+        """
         # Set the colour scheme
         colours = cmr.take_cmap_colors(cmap, len(kwargs), return_fmt='hex')
 
