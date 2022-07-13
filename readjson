@@ -41,7 +41,7 @@ class AnalyseJson:
 
             # Extract the keys and values and concatenate
             data = jsondata['data']
-            
+
         times = np.asarray(list(data), dtype=float) / (3600*24)
         vals = np.asarray(list(data.values()), dtype=float)
         return np.r_['1,2,0', times, vals], options
@@ -123,12 +123,5 @@ f4 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/w5aug.json'
 # Initialise class and implement method
 aj = AnalyseJson()
 
-# aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2)
-aj.multiplot(j1=f4, j2=f1, colnum=2, semilog=False)
-aj.multiplot(j1=f4, j2=f1, colnum=2, semilog=False, normalise=False)
-aj.multiplot(j1=f4, j2=f1, colnum=2, semilog=True, normalise=False)
+aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2)
 aj.multiplot(j1=f4, j2=f1, colnum=2)
-# aj.multiplot(j1=f4, colnum=2)
-
-
-# plt.show()
