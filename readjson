@@ -33,13 +33,15 @@ class AnalyseJson:
     def read_json(self, jsonfile):
         """Read, load, and plot data held in JSON file: mass, energy, abs vorticity, and enstrophy."""
         # Load JSON file
-        jsondata = json.load(jsonfile)
+        with open(jsonfile) as f:
+            jsondata = json.load(f)
 
-        # Extract the option information
-        options = jsondata['options']
+            # Extract the option information
+            options = jsondata['options']
 
-        # Extract the keys and values and concatenate
-        data = jsondata['data']
+            # Extract the keys and values and concatenate
+            data = jsondata['data']
+            
         times = np.asarray(list(data), dtype=float) / (3600*24)
         vals = np.asarray(list(data.values()), dtype=float)
         return np.r_['1,2,0', times, vals], options
@@ -78,7 +80,12 @@ class AnalyseJson:
         if len(out)==0: out = [' ']
         return out
 
-    def multiplot(self, cmap='winter', colnum=1, **kwargs):
+    @staticmethod
+    def normalise(slice):
+        """Normalise the data slice according to the initial value."""
+        return (slice - slice[0]) / slice[0]
+
+    def multiplot(self, normalise=True, semilog=True, cmap='winter', colnum=1, **kwargs):
         """Plot multiple json file data."""
         # Set the colour scheme
         colours = cmr.take_cmap_colors(cmap, len(kwargs), return_fmt='hex')
@@ -90,26 +97,38 @@ class AnalyseJson:
         # Plot the json data
         plt.figure()
         for i, (_, arr) in enumerate(arrs.items()):
-            plt.plot(arr[1:, 0], arr[1:, colnum], label=labels[i])
+            if normalise: column = self.normalise(arr[1:, colnum])
+            else: column = arr[1:, colnum]
+            if semilog: plt.semilogy(arr[1:, 0], column, label=labels[i])
+            else: plt.plot(arr[1:, 0], column, label=labels[i])
             
-        # Formatting
+        # Axes labels
         plt.xlabel('Time (days)')
-        plt.ylabel(self.column_dict[colnum]['ylab'])
+        if normalise: plt.ylabel('Relative error: '+self.column_dict[colnum]['ylab'])
+        else: plt.ylabel(self.column_dict[colnum]['ylab'])
+
+        # Xtick labels + legend
         dmax = max(ops['dmax'])
         plt.xticks(np.arange(dmax+1))
         if len(kwargs)>1: plt.legend()
         plt.show()
 
 
-# Locate JSON files
-f1 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json')
-f2 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/upwind/w5aug.json')
-f3 = open('/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/w5aug.json')
+# Provide path to JSON files
+f1 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json'
+f2 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/upwind/w5aug.json'
+f3 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/w5aug.json'
+f4 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
 
-# aj.multiplot(j1=f1, j2=f2, j3=f3, colnum=2)
-aj.multiplot(j1=f1, colnum=2)
+# aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2)
+aj.multiplot(j1=f4, j2=f1, colnum=2, semilog=False)
+aj.multiplot(j1=f4, j2=f1, colnum=2, semilog=False, normalise=False)
+aj.multiplot(j1=f4, j2=f1, colnum=2, semilog=True, normalise=False)
+aj.multiplot(j1=f4, j2=f1, colnum=2)
+# aj.multiplot(j1=f4, colnum=2)
 
 
+# plt.show()
