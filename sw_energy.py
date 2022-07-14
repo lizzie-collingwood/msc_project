@@ -99,7 +99,7 @@ b = fd.Function(V2, name="Topography") # bathymetry from depth space
 c = fd.sqrt(g*H)
 
 # Initialise test functions
-v, phi, w = fd.TestFunctions(W)
+w, phi, v = fd.TestFunctions(W)
 
 dx = fd.dx
 
@@ -124,7 +124,7 @@ def dHdD(u0, u1, D0, D1):
     return a/6 + g*((D1 + D0)/2 + b)
 
 # Finite element variational forms of the 3-variable shallow water equations
-def u_energy_op(v, u, D, F, dD):
+def u_energy_op(w, u, D, F, dD):
     """"""
     dS = fd.dS
     n = fd.FacetNormal(mesh)
@@ -139,10 +139,10 @@ def u_energy_op(v, u, D, F, dD):
     else:
         uappx = fd.avg(u)
 
-    return (fd.inner(v, f*perp(F/D))*dx
-            - fd.inner(perp(fd.grad(fd.inner(v, perp(F/D)))), u)*dx
-            + fd.inner(both(perp(n)*fd.inner(v, perp(F/D))), uappx)*dS
-            - fd.div(v)*dD*dx)
+    return (fd.inner(w, f*perp(F/D))*dx
+            - fd.inner(perp(fd.grad(fd.inner(w, perp(F/D)))), u)*dx
+            + fd.inner(both(perp(n)*fd.inner(w, perp(F/D))), uappx)*dS
+            - fd.div(w)*dD*dx)
 
 # Construct components of poisson integrator (/ implicit midpoint)
 if args.poisson:
@@ -154,11 +154,11 @@ else:
 
 # Poisson integrator
 p_vel_eqn = (
-    fd.inner(v, u1 - u0)*dx
+    fd.inner(w, u1 - u0)*dx
     + phi*(D1 - D0)*dx
-    + dT*u_energy_op(v, uh, Dh, F1, dD)
+    + dT*u_energy_op(w, uh, Dh, F1, dD)
     + phi*dT*fd.div(F1)*dx
-    + fd.inner(w, F1 - du)*dx
+    + fd.inner(v, F1 - du)*dx
     )
 
 # Compute conserved quantities.
@@ -264,10 +264,7 @@ Z = Dh*qn**2*dx
 file_sw = fd.File(name+'.pvd')
 etan.assign(D0 - H + b)
 
-# # Write new file to hold solver data
-# file_sw_data = fd.File(name+'.JSON') 
-# with open(name+'.json', 'w') as f:
-#     json.dump(mass, f)
+# Store the conserved properties data
 energy0 = fd.assemble(energy)
 simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0]}
 
