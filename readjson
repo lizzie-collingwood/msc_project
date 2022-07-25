@@ -89,7 +89,7 @@ class AnalyseJson:
         """Normalise the data slice according to the initial value."""
         return (slice - slice[0]) / slice[0]
 
-    def multiplot(self, normalise=True, semilog=True, cmap='winter', colnum=1, **kwargs):
+    def multiplot(self, normalise=False, semilog=False, cmap='winter', colnum=1, **kwargs):
         """
         Plot multiple json file data.
         :param kwargs: any number of strings describing path to json files.
@@ -109,7 +109,7 @@ class AnalyseJson:
         for i, (_, arr) in enumerate(arrs.items()):
             if normalise: column = self.normalise(arr[1:, colnum])
             else: column = arr[1:, colnum]
-            if semilog: plt.semilogy(arr[1:, 0], column, label=labels[i])
+            if semilog: plt.semilogy(arr[1:, 0], np.abs(column), label=labels[i])
             else: plt.plot(arr[1:, 0], column, label=labels[i])
             
         # Axes labels
@@ -126,12 +126,25 @@ class AnalyseJson:
 
 # Provide path to JSON files
 f1 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json'
+f1a = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/NEWENERGY/w5aug.json'
 f2 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/upwind/w5aug.json'
 f3 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/w5aug.json'
 f4 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/w5aug.json'
+f5 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/atoln12/w5aug.json'
+f6 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/avg/w5aug.json'
+f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/w5aug.json'
+# f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt2/w5aug.json'
+# f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/dt2/w5aug.json'
+# f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt0p5/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
 
-aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2)
-aj.multiplot(j1=f4, j2=f1, colnum=2)
+# Energy
+# aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2, normalise=True, semilog=True)
+aj.multiplot(j2=f6, j3=f7, j4=f1, j5=f4, colnum=2, normalise=True, semilog=True)
+# aj.multiplot(j1=f7, colnum=2, normalise=True, semilog=False)
+# aj.multiplot(j1=f7, colnum=2, normalise=False, semilog=False)
+
+# ---
+# aj.multiplot(j1=f6, j2=f4, colnum=2)

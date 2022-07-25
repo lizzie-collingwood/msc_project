@@ -83,9 +83,9 @@ def perp(u):
 
 # === Set up function spaces and mixed function space
 degree = args.degree # degree of FE space / complex
+V0 = fd.FunctionSpace(mesh, "CG", degree+2) # set up space for pv
 V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # set up velocity space
 V2 = fd.FunctionSpace(mesh, "DG", degree) # set up depth space (discontinuous galerkin)
-V0 = fd.FunctionSpace(mesh, "CG", degree+2) # set up space for pv
 
 W = fd.MixedFunctionSpace((V1, V2, V1)) # create mixed space
 # :: velocity, depth, potential vorticity, momentum
