@@ -58,7 +58,8 @@ class AnalyseJson:
         ops = {k: [d[k] for d in ops] for k in ops[0]}
         return arrs, ops
 
-    def find_test_parameters(self, ops):
+    @staticmethod
+    def find_test_parameters(leg_dict, ops):
         """
         Finds the test parameters given options dict.
         :param ops: dict, contains the parser arg output from sw_energy.py.
@@ -70,9 +71,9 @@ class AnalyseJson:
                 labs = list(map(str, vals))
                 K = k + ': '
                 try:
-                    K = self.leg_dict[k]['rename'] + ' '
+                    K = leg_dict[k]['rename'] + ' '
                     try:
-                        labs = [self.leg_dict[k]['options'][l] for l in labs]
+                        labs = [leg_dict[k]['options'][l] for l in labs]
                     except: pass
                 except: pass
 
@@ -102,11 +103,12 @@ class AnalyseJson:
 
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
-        labels = self.find_test_parameters(ops)
+        labels = self.find_test_parameters(self.leg_dict, ops)
 
         # Plot the json data
         plt.figure()
         for i, (_, arr) in enumerate(arrs.items()):
+            print(arr[-1, 0])
             if normalise: column = self.normalise(arr[1:, colnum])
             else: column = arr[1:, colnum]
             if semilog: plt.semilogy(arr[1:, 0], np.abs(column), label=labels[i])
@@ -139,6 +141,7 @@ f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/w5aug.jso
 
 # Initialise class and implement method
 aj = AnalyseJson()
+
 
 # Energy
 # aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2, normalise=True, semilog=True)
