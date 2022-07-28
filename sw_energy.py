@@ -32,7 +32,7 @@ if args.show_args:
 # some domain, parameters and FS setup
 R0 = 6371220. # radius of earth [m]
 H = fd.Constant(5960.) # mean depth [m]
-base_level = args.base_level # TODO: what is base_level representing?
+base_level = args.base_level # resolution of coarsest grid
 nrefs = args.ref_level - base_level # number of refinements
 name = args.filename
 deg = args.coords_degree # degree of coordinate field? 
@@ -281,6 +281,7 @@ itcount = 0
 nonlin_itcount = 0
 while t < tmax + 0.5*dt:
     PETSc.Sys.Print(t)
+    PETSc.Sys.Print('Percentage complete: ', t/tmax)
     t += dt
     tdump += dt
 
