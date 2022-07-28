@@ -332,7 +332,7 @@ with open(name+'.json', 'w') as f:
 
 # Write options to text file.
 with open(name+'_options.txt', 'w') as f:
-    f.write(argdict)
+    f.write(str(argdict))
 
 # Print performance metrics
 PETSc.Sys.Print("Iterations", itcount,
