@@ -1,3 +1,5 @@
+import time
+start = time.time()
 import firedrake as fd
 import json
 #get command arguments
@@ -267,7 +269,7 @@ etan.assign(D0 - H + b)
 
 # Store the conserved properties data
 energy0 = fd.assemble(energy)
-simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0]}
+simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0, 0]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -286,7 +288,9 @@ while t < tmax + 0.5*dt:
     tdump += dt
 
     # Solve for updated fields
+    et0 = time.time()
     nsolver.solve()
+    extime = time.time() - et0
 
     # Get the number of linear iterations
     its = nsolver.snes.getLinearSolveIterations()
@@ -305,7 +309,7 @@ while t < tmax + 0.5*dt:
     # Update field
     Un.assign(Unp1)
 
-    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its]})
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
@@ -316,15 +320,21 @@ while t < tmax + 0.5*dt:
 
     itcount += its
 
+# Execution time
+extime = time.time() - start
+print('execution_time', extime)
+
 # Save the performance and solution data to json.
-argdict = str(vars(args))
+argdict = vars(args).update({'execution_time': extime})
+# argdict = str(vars(args))
 with open(name+'.json', 'w') as f:
-    json.dump({'options': argdict, 'data': simdata}, f)
+    json.dump({'options': str(argdict), 'data': simdata}, f)
 
 # Write options to text file.
 with open(name+'_options.txt', 'w') as f:
     f.write(argdict)
 
+# Print performance metrics
 PETSc.Sys.Print("Iterations", itcount,
                 "dt", dt,
                 "ref_level", args.ref_level,
