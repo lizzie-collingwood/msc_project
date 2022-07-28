@@ -18,6 +18,7 @@ parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
 parser.add_argument("--upwind", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument("--softsign", type=float, default=0, help='Determines the level of upwind switch softening.')
 parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
 parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
@@ -134,9 +135,13 @@ def u_energy_op(w, u, D, F, dD):
     def both(x):
         return 2*fd.avg(x)
 
+    def softsign(x):
+        a = args.softsign
+        return x / fd.sqrt(x**2 + a**2)
+
     # Compute approximation of u according to arg approx_type.
     if args.upwind:
-        up = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
+        up = 0.5 * (softsign(fd.dot(u, n)) + 1)
         uappx = both(up*u)
     else:
         uappx = fd.avg(u)
@@ -320,7 +325,7 @@ while t < tmax + 0.5*dt:
 
     itcount += its
 
-# Execution time
+# Print execution time
 extime = time.time() - start
 print('execution_time:', extime)
 
