@@ -325,7 +325,8 @@ extime = time.time() - start
 print('execution_time:', extime)
 
 # Save the performance and solution data to json.
-argdict = vars(args)#.update({'execution_time': extime})
+argdict = vars(args)
+argdict.update({'execution_time': extime})
 print(argdict)
 print(type(argdict))
 # argdict = str(vars(args))
