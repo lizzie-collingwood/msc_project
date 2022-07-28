@@ -326,6 +326,8 @@ print('execution_time:', extime)
 
 # Save the performance and solution data to json.
 argdict = vars(args)#.update({'execution_time': extime})
+print(argdict)
+print(type(argdict))
 # argdict = str(vars(args))
 with open(name+'.json', 'w') as f:
     json.dump({'options': str(argdict), 'data': simdata}, f)
