@@ -24,6 +24,7 @@ class AnalyseJson:
         'snes_rtol': {'rename': 'Nonlinear stopping criteration: relative residual norm'},
         'rtol': {'rename': 'Linear stopping criteration: relative residual norm'},
         'atol': {'rename': 'Linear stopping criteration: absolute residual norm'},
+        'softsign': {'rename': '$a$ ='}
     }
 
     def __init__(self, file=None):
@@ -90,7 +91,7 @@ class AnalyseJson:
         """Normalise the data slice according to the initial value."""
         return (slice - slice[0]) / slice[0]
 
-    def multiplot(self, normalise=False, semilog=False, cmap='winter', colnum=1, **kwargs):
+    def multiplot(self, normalise=False, semilog=False, cmap='viridis', colnum=1, **kwargs):
         """
         Plot multiple json file data.
         :param kwargs: any number of strings describing path to json files.
@@ -111,8 +112,8 @@ class AnalyseJson:
             print(arr[-1, 0])
             if normalise: column = self.normalise(arr[1:, colnum])
             else: column = arr[1:, colnum]
-            if semilog: plt.semilogy(arr[1:, 0], np.abs(column), label=labels[i])
-            else: plt.plot(arr[1:, 0], column, label=labels[i])
+            if semilog: plt.semilogy(arr[1:, 0], np.abs(column), label=labels[i], color=colours[i])
+            else: plt.plot(arr[1:, 0], column, label=labels[i], color=colours[i])
             
         # Axes labels
         plt.xlabel('Time (days)')
@@ -135,6 +136,8 @@ f4 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/w5aug.json'
 f5 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/atoln12/w5aug.json'
 f6 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/avg/w5aug.json'
 f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/w5aug.json'
+f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a20/w5aug.json'
+f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a2/w5aug.json'
 # f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt2/w5aug.json'
 # f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/dt2/w5aug.json'
 # f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt0p5/w5aug.json'
@@ -145,9 +148,20 @@ aj = AnalyseJson()
 
 # Energy
 # aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2, normalise=True, semilog=True)
-aj.multiplot(j2=f6, j3=f7, j4=f1, j5=f4, colnum=2, normalise=True, semilog=True)
+aj.multiplot(j1=f8, j2=f9, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j2=f6, j3=f7, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j1=f7, colnum=2, normalise=True, semilog=False)
 # aj.multiplot(j1=f7, colnum=2, normalise=False, semilog=False)
 
 # ---
 # aj.multiplot(j1=f6, j2=f4, colnum=2)
+
+
+# ====== COLOURMAPS
+# seismic
+# winter
+# inferno
+# cool
+# plasma
+# Set2
+# ocean / gist_earth / 
