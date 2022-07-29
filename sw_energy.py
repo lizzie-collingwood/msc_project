@@ -330,14 +330,13 @@ extime = time.time() - start
 print('execution_time:', extime)
 
 # Save the performance and solution data to json.
-argdict = vars(args)
-argdict.update({'execution_time': extime})
+argdict = str(vars(args))
 with open(name+'.json', 'w') as f:
-    json.dump({'options': str(argdict), 'data': simdata}, f)
+    json.dump({'options': argdict, 'data': simdata}, f)
 
 # Write options to text file.
 with open(name+'_options.txt', 'w') as f:
-    f.write(str(argdict))
+    f.write(argdict)
 
 # Print performance metrics
 PETSc.Sys.Print("Iterations", itcount,
