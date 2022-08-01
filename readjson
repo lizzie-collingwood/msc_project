@@ -24,8 +24,9 @@ class AnalyseJson:
         'snes_rtol': {'rename': 'Nonlinear stopping criteration: relative residual norm'},
         'rtol': {'rename': 'Linear stopping criteration: relative residual norm'},
         'atol': {'rename': 'Linear stopping criteration: absolute residual norm'},
-        'softsign': {'rename': '$a$ ='}
+        'softsign': {'rename': '$a$ ='},
     }
+    ignore_dict = ['base_level']
 
     def __init__(self, file=None):
         if file is not None:
@@ -60,7 +61,7 @@ class AnalyseJson:
         return arrs, ops
 
     @staticmethod
-    def find_test_parameters(leg_dict, ops):
+    def find_test_parameters(leg_dict, ops, ignore_dict):
         """
         Finds the test parameters given options dict.
         :param ops: dict, contains the parser arg output from sw_energy.py.
@@ -68,6 +69,7 @@ class AnalyseJson:
         """
         out = []
         for k, vals in ops.items():
+            if k in ignore_dict: continue
             if len(set(vals))>1:
                 labs = list(map(str, vals))
                 K = k + ': '
@@ -104,7 +106,7 @@ class AnalyseJson:
 
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
-        labels = self.find_test_parameters(self.leg_dict, ops)
+        labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
 
         # Plot the json data
         plt.figure()
@@ -135,9 +137,11 @@ f3 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/w5aug.json'
 f4 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/w5aug.json'
 f5 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/atoln12/w5aug.json'
 f6 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/avg/w5aug.json'
-f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/w5aug.json'
+f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a0/w5aug.json'
 f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a20/w5aug.json'
 f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a2/w5aug.json'
+f10 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a40/w5aug.json'
+f11 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a80/w5aug.json'
 # f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt2/w5aug.json'
 # f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/dt2/w5aug.json'
 # f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt0p5/w5aug.json'
@@ -147,11 +151,9 @@ aj = AnalyseJson()
 
 
 # Energy
-# aj.multiplot(j1=f1, j2=f2, j3=f3, j4=f4, colnum=2, normalise=True, semilog=True)
-aj.multiplot(j1=f8, j2=f9, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j2=f6, j3=f7, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j1=f7, colnum=2, normalise=True, semilog=False)
-# aj.multiplot(j1=f7, colnum=2, normalise=False, semilog=False)
+aj.multiplot(j1=f8, j2=f9, j3=f7, j4=f10, j5=f6, j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+
 
 # ---
 # aj.multiplot(j1=f6, j2=f4, colnum=2)
