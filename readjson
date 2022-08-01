@@ -111,7 +111,6 @@ class AnalyseJson:
         # Plot the json data
         plt.figure()
         for i, (_, arr) in enumerate(arrs.items()):
-            print(arr[-1, 0])
             if normalise: column = self.normalise(arr[1:, colnum])
             else: column = arr[1:, colnum]
             if semilog: plt.semilogy(arr[1:, 0], np.abs(column), label=labels[i], color=colours[i])
@@ -142,21 +141,17 @@ f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a20/w5aug
 f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a2/w5aug.json'
 f10 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a40/w5aug.json'
 f11 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a80/w5aug.json'
-# f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt2/w5aug.json'
-# f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/dt2/w5aug.json'
-# f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/dt0p5/w5aug.json'
+f12 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a160/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
 
-
 # Energy
-aj.multiplot(j1=f8, j2=f9, j3=f7, j4=f10, j5=f6, j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j7=f12, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 
-# ---
-# aj.multiplot(j1=f6, j2=f4, colnum=2)
 
 
 # ====== COLOURMAPS
