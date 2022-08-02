@@ -147,7 +147,12 @@ f12 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a160/w5a
 aj = AnalyseJson()
 
 # Energy
-aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+
+
+aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, colnum=4, normalise=False, semilog=False, cmap='coolwarm')
+
+# aj.multiplot(j3=f1a, j2=f2, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j7=f12, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
