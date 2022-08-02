@@ -93,7 +93,7 @@ class AnalyseJson:
         """Normalise the data slice according to the initial value."""
         return (slice - slice[0]) / slice[0]
 
-    def multiplot(self, normalise=False, semilog=False, cmap='viridis', colnum=1, **kwargs):
+    def multiplot(self, normalise=False, semilog=False, cumsum=False, cmap='viridis', colnum=1, **kwargs):
         """
         Plot multiple json file data.
         :param kwargs: any number of strings describing path to json files.
@@ -113,6 +113,7 @@ class AnalyseJson:
         for i, (_, arr) in enumerate(arrs.items()):
             if normalise: column = self.normalise(arr[1:, colnum])
             else: column = arr[1:, colnum]
+            if cumsum: column = np.cumsum(column)
             if semilog: plt.semilogy(arr[1:, 0], np.abs(column), label=labels[i], color=colours[i])
             else: plt.plot(arr[1:, 0], column, label=labels[i], color=colours[i])
             
@@ -127,6 +128,23 @@ class AnalyseJson:
         if len(kwargs)>1: plt.legend()
         plt.show()
 
+    def perinf(self, **kwargs):
+        """
+        Print performance information and measurements.
+        """
+        # Extract data, options and labels from json files.
+        arrs, ops = self.extract(kwargs)
+        labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
+        
+        # Extract and compute relevant performance measures.
+        totdata = {}
+        for i, (j, arr) in enumerate(arrs.items()):
+            # Get data about totals
+            tots = [np.sum(arr[:, i]) for i in [5, 6, 7]]
+            tots.append(arr.shape[0])
+            totdata.update({j: tots})
+        
+        print(totdata)
 
 # Provide path to JSON files
 f1 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json'
@@ -147,7 +165,11 @@ f12 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a160/w5a
 aj = AnalyseJson()
 
 # Energy
-aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+
+# aj.multiplot(j6=f1a, j7=f7, j8=f2, colnum=6, normalise=False, semilog=False, cumsum=True, cmap='coolwarm')
+aj.perinf(j3=f11, j2=f12)
+
 # aj.multiplot(j7=f12, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
