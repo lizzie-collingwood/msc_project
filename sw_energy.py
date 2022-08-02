@@ -116,7 +116,7 @@ Unp1 = fd.Function(W)
 u0, F0 = fd.split(Un)
 u1, F1 = fd.split(Unp1)
 
-phi = fd.TestFunctions(V2)
+phi = fd.TestFunction(V2)
 D0 = fd.Function(V2)
 
 # Eliminate D1 from calculations
