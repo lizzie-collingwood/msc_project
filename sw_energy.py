@@ -232,9 +232,6 @@ t = 0.
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 
-D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
-D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=mg_parameters)
-
 dmax = args.dmax 
 hmax = 24*dmax
 tmax = 60.*60.*hmax
@@ -278,6 +275,11 @@ qparams = {'ksp_type':'cg'}
 qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
+# Solve for D1
+D1prob = fd.LinearVariationalProblem(fd.lhs(D1_eqn), fd.rhs(D1_eqn), D1)
+D1params = {'ksp_type':'cg'}
+D1solver = fd.NonlinearVariationalSolver(D1prob, LinearVariationalSolver=D1params)
+
 # Compute absolute vorticity and enstrophy
 Q = Dh*qn*dx
 Z = Dh*qn**2*dx
@@ -293,6 +295,7 @@ simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0,
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
+D1solver.solve()
 F0.project(u0*D0)
 file_sw.write(un, etan, qn)
 Unp1.assign(Un)
@@ -309,6 +312,7 @@ while t < tmax + 0.5*dt:
     # Solve for updated fields
     et0 = time.time()
     nsolver.solve()
+    D1solver.solve()
     extime = time.time() - et0
 
     # Get the number of linear iterations
