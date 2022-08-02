@@ -261,7 +261,8 @@ bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
 # Initial conditions
-u0, D0, F0 = Un.split()
+# u0, D0, F0 = Un.split()
+u0, F0 = Un.split()
 u0.assign(un)
 D0.assign(etan + H - b)
 
