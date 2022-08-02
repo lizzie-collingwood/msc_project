@@ -106,15 +106,20 @@ w, phi, v = fd.TestFunctions(W)
 
 dx = fd.dx
 
+dT = fd.Constant(0.)
+
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
 u0, D0, F0 = fd.split(Un)
 u1, D1, F1 = fd.split(Unp1)
-uh = 0.5*(u0 + u1)
-Dh = 0.5*(D0 + D1)
 
-dT = fd.Constant(0.)
+# Eliminate D1 from calculations
+x = D0 - dT*fd.div(F1)
+
+uh = 0.5*(u0 + u1)
+Dh = 0.5*(D0 + x)
+# Dh = 0.5*(D0 + D1)
 
 # ========= Equations
 def dHdu(u0, u1, D0, D1):
@@ -153,8 +158,8 @@ def u_energy_op(w, u, D, F, dD):
 
 # Construct components of poisson integrator (/ implicit midpoint)
 if args.poisson:
-    du = dHdu(u0, u1, D0, D1)
-    dD = dHdD(u0, u1, D0, D1)
+    du = dHdu(u0, u1, D0, x)
+    dD = dHdD(u0, u1, D0, x)
 else:
     du = Dh*uh
     dD = g*(Dh + b) + 0.5*fd.inner(uh, uh)
@@ -162,9 +167,8 @@ else:
 # Poisson integrator
 p_vel_eqn = (
     fd.inner(w, u1 - u0)*dx
-    + phi*(D1 - D0)*dx
+    + phi*(x - D1)*dx
     + dT*u_energy_op(w, uh, Dh, F1, dD)
-    + phi*dT*fd.div(F1)*dx
     + fd.inner(v, F1 - du)*dx
     )
 
