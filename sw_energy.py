@@ -175,9 +175,6 @@ p_vel_eqn = (
     + fd.inner(v, F1 - du)*dx
     )
 
-# Solve for D1 separately
-D1_eqn = (phi*(D1 - D0 + dT*fd.div(F1))*dx)
-
 # Compute conserved quantities.
 mass = D0*dx
 energy = (D0*fd.inner(u0, u0)/2 + g*fd.inner(D0+b,D0+b)/2)*dx
@@ -278,6 +275,8 @@ qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
 # Solve for D1
+D = fd.TrialFunction(V2)
+D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
 D1prob = fd.LinearVariationalProblem(fd.lhs(D1_eqn), fd.rhs(D1_eqn), D1)
 D1params = {'ksp_type':'cg'}
 D1solver = fd.NonlinearVariationalSolver(D1prob, LinearVariationalSolver=D1params)
