@@ -208,11 +208,12 @@ mg_parameters = {
     "mg_levels_patch_pc_patch_symmetrise_sweep": False, #
     "mg_levels_patch_sub_ksp_type": "preonly", # applies only pc exactly once
     "mg_levels_patch_sub_pc_type": "lu", # LU preconditioner
-    "mg_coarse_ksp_type": "preonly", # on coarse level use only pc exactly once
+    # "mg_coarse_ksp_type": "preonly", # on coarse level use only pc exactly once  # FIXME: removed this
+    "mg_levels_patch_sub_pc_factor_shift_type": "nonzero", # FIXME: added this
     "mg_coarse_pc_type": "python", #
     "mg_coarse_pc_python_type": "firedrake.AssembledPC", #
     "mg_coarse_assembled_pc_type": "lu", # coarsest level not matrix free
-    "mg_coarse_assembled_ksp_type": "preonly", #
+    # "mg_coarse_assembled_ksp_type": "preonly", # # FIXME: removed this
     "mg_coarse_assembled_pc_factor_mat_solver_type": "mumps", #
     # "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", #
 }
