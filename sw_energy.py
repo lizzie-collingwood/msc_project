@@ -119,7 +119,6 @@ x = D0 - dT*fd.div(F1)
 
 uh = 0.5*(u0 + u1)
 Dh = 0.5*(D0 + x)
-# Dh = 0.5*(D0 + D1)
 
 # ========= Equations
 def dHdu(u0, u1, D0, D1):
