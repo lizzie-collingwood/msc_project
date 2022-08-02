@@ -8,7 +8,7 @@ from petsc4py import PETSc
 from distutils.util import strtobool
 PETSc.Sys.popErrorHandler()
 import argparse
-parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.')
+parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--base_level', type=int, default=1, help='Base refinement level of icosahedral grid for MG solve. Default 1.')
 parser.add_argument('--ref_level', type=int, default=5, help='Refinement level of icosahedral grid. Default 5.') # : change default to default=1 (deffo less than 3)
 parser.add_argument('--dmax', type=float, default=15, help='Final time in days. Default 15.')
