@@ -102,23 +102,27 @@ b = fd.Function(V2, name="Topography") # bathymetry from depth space
 c = fd.sqrt(g*H)
 
 # Initialise test functions
-w, phi, v = fd.TestFunctions(W)
+w, v = fd.TestFunctions(W)
+# w, phi, v = fd.TestFunctions(W)
 
+# Spatial step and time step
 dx = fd.dx
-
 dT = fd.Constant(0.)
 
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
-u0, D0, F0 = fd.split(Un)
-u1, D1, F1 = fd.split(Unp1)
+u0, F0 = fd.split(Un)
+u1, F1 = fd.split(Unp1)
+
+phi = fd.TestFunctions(V2)
+D0 = fd.Function(V2)
 
 # Eliminate D1 from calculations
-x = D0 - dT*fd.div(F1)
+D1 = D0 - dT*fd.div(F1)
 
 uh = 0.5*(u0 + u1)
-Dh = 0.5*(D0 + x)
+Dh = 0.5*(D0 + D1)
 
 # ========= Equations
 def dHdu(u0, u1, D0, D1):
@@ -157,8 +161,8 @@ def u_energy_op(w, u, D, F, dD):
 
 # Construct components of poisson integrator (/ implicit midpoint)
 if args.poisson:
-    du = dHdu(u0, u1, D0, x)
-    dD = dHdD(u0, u1, D0, x)
+    du = dHdu(u0, u1, D0, D1)
+    dD = dHdD(u0, u1, D0, D1)
 else:
     du = Dh*uh
     dD = g*(Dh + b) + 0.5*fd.inner(uh, uh)
@@ -166,10 +170,12 @@ else:
 # Poisson integrator
 p_vel_eqn = (
     fd.inner(w, u1 - u0)*dx
-    + phi*(x - D1)*dx
     + dT*u_energy_op(w, uh, Dh, F1, dD)
     + fd.inner(v, F1 - du)*dx
     )
+
+# Solve for D1 separately
+D1_eqn = (phi*(D1 - D0 + dT*fd.div(F1))*dx)
 
 # Compute conserved quantities.
 mass = D0*dx
@@ -225,6 +231,9 @@ t = 0.
 # Nonlinear solver
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
+
+D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
+D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=mg_parameters)
 
 dmax = args.dmax 
 hmax = 24*dmax
