@@ -277,9 +277,9 @@ qsolver = fd.LinearVariationalSolver(vprob,
 # Solve for D1
 D = fd.TrialFunction(V2)
 D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
-D1prob = fd.LinearVariationalProblem(fd.lhs(D1_eqn), fd.rhs(D1_eqn), D1)
+D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
 D1params = {'ksp_type':'cg'}
-D1solver = fd.NonlinearVariationalSolver(D1prob, LinearVariationalSolver=D1params)
+D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
 # Compute absolute vorticity and enstrophy
 Q = Dh*qn*dx
