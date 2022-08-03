@@ -1,7 +1,7 @@
 import time
 start = time.time()
-import firedrake as fd
 import json
+import firedrake as fd
 #get command arguments
 from petsc4py import PETSc
 # import numpy as np
