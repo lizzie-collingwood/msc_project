@@ -275,7 +275,7 @@ qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
 # Solve for D1
-D = fd.TrialFunction(V2)
+D = fd.Function(V2)
 D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
 D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
 D1params = {'ksp_type':'cg'}
