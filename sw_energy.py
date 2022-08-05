@@ -335,6 +335,7 @@ while t < tmax + 0.5*dt:
 
     # Update field
     Un.assign(Unp1)
+    D0.assign(D)
 
     simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
