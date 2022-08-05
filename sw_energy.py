@@ -235,7 +235,19 @@ nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 
 # Solve for D1
 D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
-D1params = {'ksp_type':'lu'}
+D1params = {"snes_monitor": None, # monitor the nonlinear solver's iterations   from the web browser.
+    "mat_type": "matfree", # works with matrix as a linear operator rather than with its representation as a matrix
+    "ksp_type": "fgmres", # ksp is the package of linear solvers - flexible GMRES
+    "ksp_monitor_true_residual": None, # print the residual after each iteration
+    "ksp_converged_reason": None, # print reason for convergence
+    "snes_converged_reason": None, # print reason for convergence
+    # "snes_rtol": args.snes_rtol, # set convergence criterion; relative size of residual norm for nonlinear iterations
+    # "snes_atol": 1e-50,
+    # "snes_stol": 1e-50,
+    "ksp_atol": 1e-10, # conv test: measure of the absolute size of the residual norm
+    "ksp_rtol": 1e-10, # conv test: the decrease of the residual norm relative to the norm of the right hand side
+    "ksp_max_it": 40, # cap the number of iterations
+    }
 D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
 dmax = args.dmax 
