@@ -118,6 +118,7 @@ u1, F1 = fd.split(Unp1)
 
 phi = fd.TestFunction(V2)
 D0 = fd.Function(V2)
+D = fd.Function(V2)
 
 # Eliminate D1 from calculations
 D1 = D0 - dT*fd.div(F1)
@@ -175,7 +176,7 @@ p_vel_eqn = (
     + fd.inner(v, F1 - du)*dx
     )
 
-D1_eqn = phi*(D1 - D0 + dT*fd.div(F1))*dx
+D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
 
 # Compute conserved quantities.
 mass = D0*dx
@@ -235,7 +236,7 @@ nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 
 # Solve for D1
-D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
+D1prob = fd.NonlinearVariationalProblem(D1_eqn, D)
 D1params = {'ksp_type':'cg'}
 D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
