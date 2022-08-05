@@ -175,6 +175,8 @@ p_vel_eqn = (
     + fd.inner(v, F1 - du)*dx
     )
 
+D1_eqn = phi*(D1 - D0 + dT*fd.div(F1))*dx
+
 # Compute conserved quantities.
 mass = D0*dx
 energy = (D0*fd.inner(u0, u0)/2 + g*fd.inner(D0+b,D0+b)/2)*dx
@@ -233,7 +235,6 @@ nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 
 # Solve for D1
-D1_eqn = phi*(D1 - D0 + dT*fd.div(F1))*dx
 D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
 D1params = {'ksp_type':'cg'}
 D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
@@ -310,7 +311,7 @@ while t < tmax + 0.5*dt:
     PETSc.Sys.Print('Percentage complete: ', t/tmax)
     t += dt
     tdump += dt
-    print("hfkjsdnmhuekjsdvnfhedsnv,fijelksd")
+    
     # Solve for updated fields
     et0 = time.time()
     nsolver.solve()
