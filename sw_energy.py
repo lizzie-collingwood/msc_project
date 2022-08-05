@@ -221,10 +221,20 @@ mg_parameters = {
     # "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", # ###
 }
 
+# Solve for D1
+D = fd.Function(V2)
+D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
+
+
 # Time step size [s]
 dt = 60*60*args.dt
 dT.assign(dt)
 t = 0.
+
+
+D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
+D1params = {'ksp_type':'cg'}
+D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
 # Nonlinear solver
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
@@ -273,13 +283,6 @@ vprob = fd.LinearVariationalProblem(fd.lhs(veqn), fd.rhs(veqn), qn)
 qparams = {'ksp_type':'cg'}
 qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
-
-# Solve for D1
-D = fd.Function(V2)
-D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
-D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
-D1params = {'ksp_type':'cg'}
-D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
 # Compute absolute vorticity and enstrophy
 Q = Dh*qn*dx
