@@ -220,8 +220,8 @@ mg_parameters = {
     "mg_coarse_pc_python_type": "firedrake.AssembledPC", #
     "mg_coarse_assembled_pc_type": "lu", # coarsest level not matrix free
     "mg_coarse_assembled_ksp_type": "preonly", # ###
-    # "mg_coarse_assembled_pc_factor_mat_solver_type": "mumps", # FIXME: changed to this
-    "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", # ###
+    "mg_coarse_assembled_pc_factor_mat_solver_type": "mumps", # FIXME: changed to this
+    # "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", # ###
 }
 
 
