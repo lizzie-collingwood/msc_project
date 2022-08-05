@@ -222,8 +222,7 @@ mg_parameters = {
 }
 
 # Solve for D1
-D = fd.Function(V2)
-D1_eqn = phi*(D - D0 + dT*fd.div(F1))*dx
+D1_eqn = phi*(D1 - D0 + dT*fd.div(F1))*dx
 
 
 # Time step size [s]
