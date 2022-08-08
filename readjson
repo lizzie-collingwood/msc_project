@@ -1,6 +1,7 @@
 import json
 import ast
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 plt.rcParams['mathtext.fontset'] = 'stix'
@@ -16,7 +17,8 @@ class AnalyseJson:
         3: {'ylab': 'Absolute vorticity'},
         4: {'ylab': 'Total enstrophy'},
         5: {'ylab': 'Linear iterations'},
-        6: {'ylab': 'Nonlinear iterations'},}
+        6: {'ylab': 'Nonlinear iterations'},
+        7: {'ylab': 'Execution time'}}
     leg_dict = {
         'poisson': {'rename': '', 'options': {'True': 'PI', 'False': 'IMR'}},
         'upwind': {'rename': '', 'options': {'True': 'Upwind', 'False': 'Average'}},
@@ -135,16 +137,23 @@ class AnalyseJson:
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
+        # print(labels)
+        cols = [5, 6, 7]
         
         # Extract and compute relevant performance measures.
         totdata = {}
         for i, (j, arr) in enumerate(arrs.items()):
             # Get data about totals
-            tots = [np.sum(arr[:, i]) for i in [5, 6, 7]]
+            tots = [np.sum(arr[:, i]) for i in cols]
             tots.append(arr.shape[0])
             totdata.update({j: tots})
         
-        print(totdata)
+        # Combine data into a dataframe and print.
+        data = np.array([totdata[i] for i in totdata.keys()])
+        columns = [self.column_dict[i]['ylab'] for i in cols]
+        columns.append('No. timesteps')
+        df = pd.DataFrame(data, index=labels, columns=columns)
+        print(df)
 
 # Provide path to JSON files
 f1 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json'
