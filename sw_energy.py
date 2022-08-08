@@ -235,7 +235,7 @@ nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
 
 # Solve for D1
 D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
-D1params = {"ksp_type":"preonly","pc_type":"ilu"}
+D1params = {"ksp_type":"preonly","pc_type":"ilu"} # TODO: haven't tried running with this yet - to see if more accurate
 D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
 dmax = args.dmax 
