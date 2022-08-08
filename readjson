@@ -107,7 +107,7 @@ class AnalyseJson:
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
-        # labels = ['old','neworig', 'newparams']
+        labels = ['newparams', 'old']
 
         # Plot the json data
         plt.figure()
@@ -151,13 +151,14 @@ f16 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/newsolver_superlu/
 f17 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/newsolver_newparams/w5aug.json'
 f18 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref2/newsolver/w5aug.json'
 f19 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/w5aug.json'
-f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref2/newparams/w5aug.json'
+f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/newparams/w5aug.json'
+# f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref2/newparams/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
 
 
-# aj.multiplot(j1=f13, j2=f14, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j2=f20, j3=f7, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, colnum=4, normalise=False, semilog=False, cmap='coolwarm')
 
