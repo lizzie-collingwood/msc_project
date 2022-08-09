@@ -175,18 +175,22 @@ f12 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a160/w5a
 f13 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/PI/avg/w5aug.json'
 f14 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/IMR/avg/w5aug.json'
 f15 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/PI/upwind/w5aug.json'
+f16 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/Picard/upwind/w5aug.json'
+f17 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/Picard/upwind/newoptions/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
 
-# Energy
+# ======= Upwind softsign values
 # aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
-aj.multiplot(j1=f13, j2=f14, j3=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# ======= Ref5
+# aj.multiplot(j1=f13, j2=f14, j3=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.perinf(j3=f13, j2=f14)
 
-# aj.multiplot(j7=f12, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j6=f11, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# ======= Picard vs IMR vs PI
+aj.multiplot(j1=f1a, j2=f2, j3=f16, j4=f17, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f1a, j2=f2, j3=f16, j4=f17, colnum=7, normalise=False, semilog=False, cmap='coolwarm')
 
 
 
