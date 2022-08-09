@@ -528,6 +528,7 @@ itcount = 0
 stepcount = 0
 while t < tmax + 0.5*dt:
     PETSc.Sys.Print(t)
+    PETSc.Sys.Print('Percentage complete: ', t/tmax)
     t += dt
     tdump += dt
 
