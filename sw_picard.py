@@ -3,6 +3,7 @@ import firedrake as fd
 from petsc4py import PETSc
 PETSc.Sys.popErrorHandler()
 import mg
+import time
 import argparse
 parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.')
 parser.add_argument('--base_level', type=int, default=1, help='Base refinement level of icosahedral grid for MG solve. Default 1.')
@@ -130,10 +131,8 @@ energy = (D0*fd.inner(u0, u0)/2 + g*fd.inner(D0+b,D0+b)/2)*dx
 def both(u):
     return 2*fd.avg(u)
 
-
 dT = fd.Constant(0.)
 dS = fd.dS
-
 
 def u_op(v, u, D):
     Upwind = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
@@ -144,13 +143,11 @@ def u_op(v, u, D):
                           both(Upwind*u))*dS
             - fd.div(v)*(g*(D + b) + K)*dx)
 
-
 def h_op(phi, u, D):
     uup = 0.5 * (fd.dot(u, n) + abs(fd.dot(u, n)))
     return (- fd.inner(fd.grad(phi), u)*D*dx
             + fd.jump(phi)*(uup('+')*D('+')
                             - uup('-')*D('-'))*dS)
-
 
 if args.time_scheme == 1:
     "implicit midpoint rule"
@@ -505,12 +502,20 @@ qparams = {'ksp_type':'cg'}
 qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
+# Compute absolute vorticity and enstrophy
+Q = Dh*qn*dx
+Z = Dh*qn**2*dx
+
 file_sw = fd.File(name+'.pvd')
 etan.assign(D0 - H + b)
 un.assign(u0)
 qsolver.solve()
 file_sw.write(un, etan, qn)
 Unp1.assign(Un)
+
+# Store the conserved properties data
+energy0 = fd.assemble(energy)
+simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0, 0]}
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
 itcount = 0
@@ -520,7 +525,11 @@ while t < tmax + 0.5*dt:
     t += dt
     tdump += dt
 
+    # Solve for updated fields
+    et0 = time.time()
     nsolver.solve()
+    extime = time.time() - et0
+
     res = fd.assemble(testeqn)
     PETSc.Sys.Print(res.dat.data[0].max(), res.dat.data[0].min(),
           res.dat.data[1].max(), res.dat.data[1].min())
@@ -528,6 +537,23 @@ while t < tmax + 0.5*dt:
     res = fd.assemble(testeqn)
     PETSc.Sys.Print(res.dat.data[0].max(), res.dat.data[0].min(),
           res.dat.data[1].max(), res.dat.data[1].min())
+
+    # Get the number of linear iterations
+    its = nsolver.snes.getLinearSolveIterations()
+    nonlin_its = nsolver.snes.getIterationNumber()
+
+    # Compute and print quantities that should be conserved
+    _mass = fd.assemble(mass)
+    _energy = fd.assemble(energy)
+    _Q = fd.assemble(Q)
+    _Z = fd.assemble(Z)
+    print("mass:", _mass)
+    print("energy:", (energy0 - _energy) / energy0)
+    print("abs vorticity:", _Q)
+    print("enstrophy:", _Z)
+
+    # Update simdata
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
     
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
