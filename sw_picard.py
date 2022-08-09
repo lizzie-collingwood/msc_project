@@ -508,6 +508,7 @@ qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
 # Compute absolute vorticity and enstrophy
+Dh = 0.5*(D0 + D1)
 Q = Dh*qn*dx
 Z = Dh*qn**2*dx
 
