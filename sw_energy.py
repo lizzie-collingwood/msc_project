@@ -1,7 +1,7 @@
 import time
 start = time.time()
-import firedrake as fd
 import json
+import firedrake as fd
 #get command arguments
 from petsc4py import PETSc
 # import numpy as np
@@ -90,7 +90,8 @@ V0 = fd.FunctionSpace(mesh, "CG", degree+2) # set up space for pv
 V1 = fd.FunctionSpace(mesh, "BDM", degree+1) # set up velocity space
 V2 = fd.FunctionSpace(mesh, "DG", degree) # set up depth space (discontinuous galerkin)
 
-W = fd.MixedFunctionSpace((V1, V2, V1)) # create mixed space
+W = fd.MixedFunctionSpace((V1, V1)) # create mixed space
+# W = fd.MixedFunctionSpace((V1, V2, V1)) # create mixed space
 # :: velocity, depth, potential vorticity, momentum
 # BDM - vector valued, linear components, \
 # compatible spaces, deg => second order, 
@@ -102,19 +103,28 @@ b = fd.Function(V2, name="Topography") # bathymetry from depth space
 c = fd.sqrt(g*H)
 
 # Initialise test functions
-w, phi, v = fd.TestFunctions(W)
+w, v = fd.TestFunctions(W)
+# w, phi, v = fd.TestFunctions(W)
 
+# Spatial step and time step
 dx = fd.dx
+dT = fd.Constant(0.)
 
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
-u0, D0, F0 = fd.split(Un)
-u1, D1, F1 = fd.split(Unp1)
-uh = 0.5*(u0 + u1)
-Dh = 0.5*(D0 + D1)
+u0, F0 = fd.split(Un)
+u1, F1 = fd.split(Unp1)
 
-dT = fd.Constant(0.)
+phi = fd.TestFunction(V2)
+D0 = fd.Function(V2)
+D1 = fd.Function(V2)
+
+# Eliminate D1 from calculations
+D = D0 - dT*fd.div(F1)
+
+uh = 0.5*(u0 + u1)
+Dh = 0.5*(D0 + D)
 
 # ========= Equations
 def dHdu(u0, u1, D0, D1):
@@ -153,8 +163,8 @@ def u_energy_op(w, u, D, F, dD):
 
 # Construct components of poisson integrator (/ implicit midpoint)
 if args.poisson:
-    du = dHdu(u0, u1, D0, D1)
-    dD = dHdD(u0, u1, D0, D1)
+    du = dHdu(u0, u1, D0, D)
+    dD = dHdD(u0, u1, D0, D)
 else:
     du = Dh*uh
     dD = g*(Dh + b) + 0.5*fd.inner(uh, uh)
@@ -162,11 +172,11 @@ else:
 # Poisson integrator
 p_vel_eqn = (
     fd.inner(w, u1 - u0)*dx
-    + phi*(D1 - D0)*dx
     + dT*u_energy_op(w, uh, Dh, F1, dD)
-    + phi*dT*fd.div(F1)*dx
     + fd.inner(v, F1 - du)*dx
     )
+
+D1_eqn = phi*(D1 - D0 + dT*fd.div(F1))*dx
 
 # Compute conserved quantities.
 mass = D0*dx
@@ -203,12 +213,14 @@ mg_parameters = {
     "mg_levels_patch_pc_patch_symmetrise_sweep": False, #
     "mg_levels_patch_sub_ksp_type": "preonly", # applies only pc exactly once
     "mg_levels_patch_sub_pc_type": "lu", # LU preconditioner
-    "mg_coarse_ksp_type": "preonly", # on coarse level use only pc exactly once
+    "mg_coarse_ksp_type": "preonly", # on coarse level use only pc exactly once ###
+    # "mg_levels_patch_sub_pc_factor_shift_type": "nonzero", # FIXME: added this
     "mg_coarse_pc_type": "python", #
     "mg_coarse_pc_python_type": "firedrake.AssembledPC", #
     "mg_coarse_assembled_pc_type": "lu", # coarsest level not matrix free
-    "mg_coarse_assembled_ksp_type": "preonly", #
-    "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", #
+    "mg_coarse_assembled_ksp_type": "preonly", # ###
+    "mg_coarse_assembled_pc_factor_mat_solver_type": "mumps", # FIXME: changed to this
+    # "mg_coarse_assembled_pc_factor_mat_solver_type": "superlu_dist", # ###
 }
 
 # Time step size [s]
@@ -219,6 +231,11 @@ t = 0.
 # Nonlinear solver
 nprob = fd.NonlinearVariationalProblem(p_vel_eqn, Unp1)
 nsolver = fd.NonlinearVariationalSolver(nprob, solver_parameters=mg_parameters)
+
+# Solve for D1
+D1prob = fd.NonlinearVariationalProblem(D1_eqn, D1)
+D1params = {"ksp_type":"preonly","pc_type":"ilu"} # TODO: haven't tried running with this yet - to see if more accurate
+D1solver = fd.NonlinearVariationalSolver(D1prob, solver_parameters=D1params)
 
 dmax = args.dmax 
 hmax = 24*dmax
@@ -248,7 +265,7 @@ bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
 # Initial conditions
-u0, D0, F0 = Un.split()
+u0, F0 = Un.split()
 u0.assign(un)
 D0.assign(etan + H - b)
 
@@ -278,6 +295,7 @@ simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0,
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
+D1solver.solve()
 F0.project(u0*D0)
 file_sw.write(un, etan, qn)
 Unp1.assign(Un)
@@ -290,10 +308,11 @@ while t < tmax + 0.5*dt:
     PETSc.Sys.Print('Percentage complete: ', t/tmax)
     t += dt
     tdump += dt
-
+    
     # Solve for updated fields
     et0 = time.time()
     nsolver.solve()
+    D1solver.solve()
     extime = time.time() - et0
 
     # Get the number of linear iterations
@@ -310,8 +329,9 @@ while t < tmax + 0.5*dt:
     print("abs vorticity:", _Q)
     print("enstrophy:", _Z)
 
-    # Update field
+    # Update fields
     Un.assign(Unp1)
+    D0.assign(D1)
 
     simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
