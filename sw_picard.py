@@ -4,6 +4,7 @@ from petsc4py import PETSc
 PETSc.Sys.popErrorHandler()
 import mg
 import time
+import json
 import argparse
 parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.')
 parser.add_argument('--base_level', type=int, default=1, help='Base refinement level of icosahedral grid for MG solve. Default 1.')
@@ -16,6 +17,9 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours. Defa
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=3, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=2, help='Degree of finite element space (the DG space).')
+parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--kspschur', type=int, default=40, help='Max number of KSP iterations on the Schur complement. Default 40.')
 parser.add_argument('--kspmg', type=int, default=3, help='Max number of KSP iterations in the MG levels. Default 3.')
 parser.add_argument('--tlblock', type=str, default='mg', help='Solver for the velocity-velocity block. mg==Multigrid with patchPC, lu==direct solver with MUMPS, patch==just do a patch smoother. Default is mg')
@@ -414,8 +418,9 @@ elif args.solver_mode == 'monolithic':
         "ksp_type": "fgmres",
         "ksp_monitor_true_residual": None,
         "ksp_converged_reason": None,
-        "ksp_atol": 1e-8,
-        "ksp_rtol": 1e-8,
+        "snes_rtol": args.snes_rtol,
+        "ksp_atol": args.atol,
+        "ksp_rtol": args.rtol,
         "ksp_max_it": 400,
         "pc_type": "mg",
         "pc_mg_cycle_type": "v",
@@ -565,3 +570,13 @@ while t < tmax + 0.5*dt:
     itcount += nsolver.snes.getLinearSolveIterations()
 PETSc.Sys.Print("Iterations", itcount, "its per step", itcount/stepcount,
                 "dt", dt, "tlblock", args.tlblock, "ref_level", args.ref_level, "dmax", args.dmax)
+
+# Save the performance and solution data to json.
+argz = {'base_level': args.base_level, 'ref_level': args.ref_level, 'dmax': args.dmax, 'dumpt': args.dumpt, 'dt': args.dt, 'filename': args.filename, 'coords_degree': args.coords_degree, 'degree': args.degree, 'upwind': True, 'softsign': 0, 'poisson': 'Picard', 'snes_rtol': 1e-8, 'atol': args.atol, 'rtol': args.rtol, 'show_args': args.show_args}
+argdict = str(vars(argz))
+with open(name+'.json', 'w') as f:
+    json.dump({'options': argdict, 'data': simdata}, f)
+
+# Write options to text file.
+with open(name+'_options.txt', 'w') as f:
+    f.write(argdict)
