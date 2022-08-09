@@ -119,10 +119,13 @@ dx = fd.dx
 Un = fd.Function(W)
 Unp1 = fd.Function(W)
 
-u0, h0 = fd.split(Un)
-u1, h1 = fd.split(Unp1)
+u0, D0 = fd.split(Un)
+u1, D1 = fd.split(Unp1)
 n = fd.FacetNormal(mesh)
 
+# Compute conserved quantities.
+mass = D0*dx
+energy = (D0*fd.inner(u0, u0)/2 + g*fd.inner(D0+b,D0+b)/2)*dx
 
 def both(u):
     return 2*fd.avg(u)
@@ -132,37 +135,37 @@ dT = fd.Constant(0.)
 dS = fd.dS
 
 
-def u_op(v, u, h):
+def u_op(v, u, D):
     Upwind = 0.5 * (fd.sign(fd.dot(u, n)) + 1)
     K = 0.5*fd.inner(u, u)
     return (fd.inner(v, f*perp(u))*dx
             - fd.inner(perp(fd.grad(fd.inner(v, perp(u)))), u)*dx
             + fd.inner(both(perp(n)*fd.inner(v, perp(u))),
                           both(Upwind*u))*dS
-            - fd.div(v)*(g*(h + b) + K)*dx)
+            - fd.div(v)*(g*(D + b) + K)*dx)
 
 
-def h_op(phi, u, h):
+def h_op(phi, u, D):
     uup = 0.5 * (fd.dot(u, n) + abs(fd.dot(u, n)))
-    return (- fd.inner(fd.grad(phi), u)*h*dx
-            + fd.jump(phi)*(uup('+')*h('+')
-                            - uup('-')*h('-'))*dS)
+    return (- fd.inner(fd.grad(phi), u)*D*dx
+            + fd.jump(phi)*(uup('+')*D('+')
+                            - uup('-')*D('-'))*dS)
 
 
 if args.time_scheme == 1:
     "implicit midpoint rule"
     uh = 0.5*(u0 + u1)
-    hh = 0.5*(h0 + h1)
+    Dh = 0.5*(D0 + D1)
 
     testeqn = (
         fd.inner(v, u1 - u0)*dx
-        + dT*u_op(v, uh, hh)
-        + phi*(h1 - h0)*dx
-        + dT*h_op(phi, uh, hh))
+        + dT*u_op(v, uh, Dh)
+        + phi*(D1 - D0)*dx
+        + dT*h_op(phi, uh, Dh))
     # the extra bit
     eqn = testeqn \
-        + gamma*(fd.div(v)*(h1 - h0)*dx
-                 + dT*h_op(fd.div(v), uh, hh))
+        + gamma*(fd.div(v)*(D1 - D0)*dx
+                 + dT*h_op(fd.div(v), uh, Dh))
 
     
 elif args.time_scheme == 0:
@@ -171,16 +174,16 @@ elif args.time_scheme == 0:
 
     testeqn = (
         fd.inner(v, u1 - u0)*dx
-        + half*dT*u_op(v, u0, h0)
-        + half*dT*u_op(v, u1, h1)
-        + phi*(h1 - h0)*dx
-        + half*dT*h_op(phi, u0, h0)
-        + half*dT*h_op(phi, u1, h1))
+        + half*dT*u_op(v, u0, D0)
+        + half*dT*u_op(v, u1, D1)
+        + phi*(D1 - D0)*dx
+        + half*dT*h_op(phi, u0, D0)
+        + half*dT*h_op(phi, u1, D1))
     # the extra bit
     eqn = testeqn \
-        + gamma*(fd.div(v)*(h1 - h0)*dx
-                 + half*dT*h_op(fd.div(v), u0, h0)
-                 + half*dT*h_op(fd.div(v), u1, h1))
+        + gamma*(fd.div(v)*(D1 - D0)*dx
+                 + half*dT*h_op(fd.div(v), u0, D0)
+                 + half*dT*h_op(fd.div(v), u1, D1))
 else:
     raise NotImplementedError
     
@@ -246,9 +249,9 @@ class HelmholtzPC(fd.PCBase):
         self.yf = fd.Function(V) # the preconditioned residual
 
         L = get_laplace(u, self.xf*gamma)
-        hh_prob = fd.LinearVariationalProblem(a, L, self.yf)
-        self.hh_solver = fd.LinearVariationalSolver(
-            hh_prob,
+        Dh_prob = fd.LinearVariationalProblem(a, L, self.yf)
+        self.Dh_solver = fd.LinearVariationalSolver(
+            Dh_prob,
             options_prefix=prefix)
 
     def update(self, pc):
@@ -271,7 +274,7 @@ class HelmholtzPC(fd.PCBase):
         self.xf -= xbar
         
         #do the Helmholtz solver
-        self.hh_solver.solve()
+        self.Dh_solver.solve()
 
         # add the mean
         self.yf += xbar/2*dT*gamma*H
@@ -488,9 +491,9 @@ minarg = fd.Min(pow(rl, 2),
 bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
-u0, h0 = Un.split()
+u0, D0 = Un.split()
 u0.assign(un)
-h0.assign(etan + H - b)
+D0.assign(etan + H - b)
 
 q = fd.TrialFunction(V0)
 p = fd.TestFunction(V0)
@@ -503,7 +506,7 @@ qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
 file_sw = fd.File(name+'.pvd')
-etan.assign(h0 - H + b)
+etan.assign(D0 - H + b)
 un.assign(u0)
 qsolver.solve()
 file_sw.write(un, etan, qn)
@@ -527,7 +530,7 @@ while t < tmax + 0.5*dt:
           res.dat.data[1].max(), res.dat.data[1].min())
     
     if tdump > dumpt - dt*0.5:
-        etan.assign(h0 - H + b)
+        etan.assign(D0 - H + b)
         un.assign(u0)
         qsolver.solve()
         file_sw.write(un, etan, qn)
