@@ -151,8 +151,8 @@ f16 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/newsolver_superlu/
 f17 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/newsolver_newparams/w5aug.json'
 f18 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref2/newsolver/w5aug.json'
 f19 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/w5aug.json'
-f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/newparams/w5aug.json'
-# f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref2/newparams/w5aug.json'
+# f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/newparams/w5aug.json'
+f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/Picard/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
