@@ -98,7 +98,7 @@ W = fd.MixedFunctionSpace((V1, V2, V1)) # create mixed space
 Omega = fd.Constant(7.292e-5)  # angular rotation rate [rads]
 f = 2*Omega*cz/fd.Constant(R0)  # Coriolis parameter
 # g = fd.Constant(9.8)  # Gravitational constant [ms^-2]
-g = fd.Constant(9.810616)  # Gravitational constant [ms^-2]
+g = fd.Constant(9.810616)  # Gravitational constant [ms^-2] FIXME: TODO: DECIDE WHETHER TO KEEP !!!!!!
 b = fd.Function(V2, name="Topography") # bathymetry from depth space
 c = fd.sqrt(g*H)
 
