@@ -180,6 +180,8 @@ f17a = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/Picard/upwind/w5a
 f17b = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/Picard/upwind/newoptions/w5aug.json'
 f20 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/w5aug.json'
 f21 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/avg/w5aug.json'
+f22 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/upwind/w5aug.json'
+f23 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/avg/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
@@ -191,10 +193,10 @@ aj = AnalyseJson()
 # aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref4
-# aj.multiplot(j1=f20, j2=f21, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref5
-aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.perinf(j3=f13, j2=f14)
 
 # ======= Ref4 vs Ref5
