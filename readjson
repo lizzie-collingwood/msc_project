@@ -109,7 +109,7 @@ class AnalyseJson:
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
-        # labels = ['old', 'new g']
+        # labels = ['Original','Simplified solver']
 
         # Plot the json data
         plt.figure()
@@ -138,8 +138,9 @@ class AnalyseJson:
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
-        # print(labels)
+        labels = ['Original','Simplified solver']
         cols = [5, 6, 7]
+        cols = [5, 6]
         
         # Extract and compute relevant performance measures.
         totdata = {}
@@ -156,8 +157,14 @@ class AnalyseJson:
         df = pd.DataFrame(data, index=labels, columns=columns)
 
         # Add extra columns
+        df['Avg. linear its / nonlinear its'] = df.iloc[:, 0] / df.iloc[:, 1]
+        df['Avg. linear its / timestep'] = df.iloc[:, 0] / df.iloc[:, 2]
+        df['Avg. nonlinear its / timestep'] = df.iloc[:, 1] / df.iloc[:, 2]
 
-        print(df)
+        # Write options to text file.
+        df.round(2).to_csv('dataperinf.txt')
+
+        print(df.round(2))
 
     @staticmethod
     def softsignplot():
@@ -186,13 +193,13 @@ f2 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/upwind/w5aug.js
 f3 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/avg/w5aug.json'
 f4 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/w5aug.json'
 f5 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/avg/atoln12/w5aug.json'
-f6 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/avg/w5aug.json'
-f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a0/w5aug.json'
-f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a20/w5aug.json'
-f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a2/w5aug.json'
-f10 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a40/w5aug.json'
-f11 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a80/w5aug.json'
-f12 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a160/w5aug.json'
+f6 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/avg/w5aug.json'
+f7 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/upwind/a0/w5aug.json'
+f8 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/upwind/a20/w5aug.json'
+f9 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/upwind/a2/w5aug.json'
+f10 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/upwind/a40/w5aug.json'
+f11 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/upwind/a80/w5aug.json'
+f12 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/dt1/upwind/a160/w5aug.json'
 f13 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/PI/avg/w5aug.json'
 f14 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/IMR/avg/w5aug.json'
 f15 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/PI/upwind/w5aug.json'
@@ -205,20 +212,21 @@ f22 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/upwind/w5aug.j
 f23 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/avg/w5aug.json'
 f24 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/NEWENERGY/NEWGRAVITY/w5aug.json'
 f25 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/NEWGRAVITY/w5aug.json'
+f26 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/newparams/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
-
-aj.softsignplot()
 
 # ======= Changing g
 # aj.multiplot(j1=f20, j2=f25, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Eliminating D1
-# aj.multiplot(j1=f20, j2=f21, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f7, j2=f26, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+aj.perinf(j3=f7, j2=f26)
 
 # ======= Upwind softsign values
 # aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f7, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref4
 # aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
