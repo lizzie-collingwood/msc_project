@@ -159,6 +159,26 @@ class AnalyseJson:
 
         print(df)
 
+    @staticmethod
+    def softsignplot():
+
+        # Set the colour scheme
+        colours = cmr.take_cmap_colors('coolwarm', 3, return_fmt='hex')
+
+        # Plot the sign and soft sign
+        plt.figure()
+        xx = np.arange(-7,8,0.01)
+        plt.plot(xx, xx/np.sqrt(xx**2 + 1), color=colours[0], label='Soft sign')
+        plt.plot(xx, np.sign(xx), color=colours[-1], label='Sign')
+
+        # Formatting
+        plt.xticks(np.arange(-7,8), labels=[])
+        plt.xlim([-7,7])
+        plt.hlines(y=0, xmin=-7, xmax=7, color='darkgray')
+        plt.legend()
+        plt.show()
+        
+
 # Provide path to JSON files
 f1 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json'
 f1a = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/NEWENERGY/w5aug.json'
@@ -184,13 +204,15 @@ f21 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/avg/w5aug.json'
 f22 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/upwind/w5aug.json'
 f23 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/avg/w5aug.json'
 f24 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/NEWENERGY/NEWGRAVITY/w5aug.json'
+f25 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/NEWGRAVITY/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
 
+aj.softsignplot()
 
 # ======= Changing g
-aj.multiplot(j1=f1a, j2=f24, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f20, j2=f25, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Eliminating D1
 # aj.multiplot(j1=f20, j2=f21, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
@@ -200,6 +222,7 @@ aj.multiplot(j1=f1a, j2=f24, colnum=2, normalise=True, semilog=True, cmap='coolw
 
 # ======= Ref4
 # aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f20, j2=f21, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref5
 # aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
