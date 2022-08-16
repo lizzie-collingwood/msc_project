@@ -222,7 +222,7 @@ aj = AnalyseJson()
 
 # ======= Eliminating D1
 # aj.multiplot(j1=f7, j2=f26, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-aj.perinf(j3=f7, j2=f26)
+# aj.perinf(j3=f7, j2=f26)
 
 # ======= Upwind softsign values
 # aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
@@ -237,7 +237,7 @@ aj.perinf(j3=f7, j2=f26)
 # aj.perinf(j3=f13, j2=f14)
 
 # ======= Ref4 vs Ref5
-# aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Picard vs IMR vs PI
 # aj.multiplot(j1=f1a, j2=f2, j4=f17a, j5=f17b, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
