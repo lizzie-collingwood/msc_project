@@ -237,7 +237,7 @@ aj = AnalyseJson()
 # aj.perinf(j3=f13, j2=f14)
 
 # ======= Ref4 vs Ref5
-aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Picard vs IMR vs PI
 # aj.multiplot(j1=f1a, j2=f2, j4=f17a, j5=f17b, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
@@ -245,6 +245,9 @@ aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolw
 
 # ======= Tightening tolerances
 # aj.multiplot(j1=f7, j2=f20, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+
+# ======= Upwind vs avg
+aj.multiplot(j3=f13, j2=f15, colnum=4, normalise=True, semilog=True, cmap='coolwarm')
 
 
 
