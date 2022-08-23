@@ -3,7 +3,9 @@ simulation, with energy conserving space discretisation including
 upwinding for u, D, and semi-implicit time discretisation"""
 import logging
 import json
-from time import ctime
+from time import ctime, time
+start = time()
+from distutils.util import strtobool
 from petsc4py import PETSc
 from numpy import float64, zeros, arctan2, arcsin
 from numpy import sqrt as np_sqrt
@@ -37,16 +39,23 @@ parser.add_argument('--show_args', action='store_true', help='Output all the arg
 args = parser.parse_known_args()
 args = args[0]
 
+# some domain, parameters and FS setup
+name = args.filename
+dir_name = 'Test'
+file_name = 'W5_u-ad_D-ad'
+
 # discretisation parameters
 ref_level = args.ref_level
-dt = 120.
+# dt = 120.
+dt = 60*60*args.dt
 tmax = 24*60*60*args.dmax
 init_t = 0.
 maxk = 4
 field_dumpfreq = 24*30*5 # Dump every 5 days
-
-dir_name = 'Test'
-file_name = 'W5_u-ad_D-ad'
+t = 0.
+hdump = args.dumpt
+dumpt = hdump*60.*60.
+tdump = 0.
 
 R, Omega = 6371220., 7.292e-5
 mesh = IcosahedralSphereMesh(radius=R, refinement_level=ref_level,
@@ -282,10 +291,17 @@ def write_output(t, counter, dfr, outf, fld_out):
         eta_out.interpolate(Dn + b)        
         outf.write(*fld_out)
 
+# Store the conserved properties data
+energy0 = assemble(energy)
+simdata = {t: [assemble(mass), energy0, assemble(Q), assemble(Z), 0, 0, 0]}
 
 write_output(init_t, 0, field_dumpfreq, outfile, field_output)
 
 logger.info("Finished setting up output at {0}".format(ctime()))
+
+PETSc.Sys.Print('tmax', tmax, 'dt', dt)
+itcount = 0
+nonlin_itcount = 0
 
 # Timeloop
 xnk.assign(xn)
@@ -296,9 +312,21 @@ while t < tmax - 0.5*dt:
     PETSc.Sys.Print('Percentage complete: ', t/tmax)
     logger.info("Timestep nr {0} at {1}".format(count, ctime()))
     t += dt
+    tdump += dt
+
+    # Compute and print quantities that should be conserved
+    _mass = assemble(mass)
+    _energy = assemble(energy)
+    _Q = assemble(Q)
+    _Z = assemble(Z)
+    print("mass:", _mass)
+    print("energy:", (energy0 - _energy) / energy0)
+    print("abs vorticity:", _Q)
+    print("enstrophy:", _Z)
 
     # Run solvers
     for _ in range(maxk):
+        et0 = time()
         u_rec_solver.solve()
         Psolver.solve()
         D_ad_solver.solve()
@@ -307,11 +335,46 @@ while t < tmax - 0.5*dt:
         f_u_solver.solve()
         up += uf
 
+        # Get the number of linear iterations
+        its = nsolver.snes.getLinearSolveIterations()
+        nonlin_its = nsolver.snes.getIterationNumber()
+
         uD_solver.solve()
         xnk += xd
+        extime = time() - et0
 
+    # if tdump > dumpt - dt*0.5:
+    #     etan.assign(D0 - H + b)
+    #     un.assign(u0)
+    #     qsolver.solve()
+    #     file_sw.write(un, etan, qn)
+    #     tdump -= dumpt
+
+    # Update field
     xn.assign(xnk)
+
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
     # Write output
     count += 1
     write_output(t, count, field_dumpfreq, outfile, field_output)
+
+
+# Print execution time
+extime = time() - start
+print('execution_time:', extime)
+
+# Save the performance and solution data to json.
+argdict = str(vars(args))
+with open(name+'.json', 'w') as f:
+    json.dump({'options': argdict, 'data': simdata}, f)
+
+# Write options to text file.
+with open(name+'_options.txt', 'w') as f:
+    f.write(argdict)
+
+# Print performance metrics
+PETSc.Sys.Print("Iterations", itcount,
+                "dt", dt,
+                "ref_level", args.ref_level,
+                "dmax", args.dmax)
