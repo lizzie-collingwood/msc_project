@@ -272,8 +272,7 @@ uD_solver = LinearVariationalSolver(uD_problem, solver_parameters=params)
 logger.info("Finished setting up solvers at {0}".format(ctime()))
 
 # Setup output
-fname = 'Temp_out/' + dir_name + '/' + file_name
-outfile = File('{0}.pvd'.format(fname))
+outfile = File('{0}.pvd'.format(args.name))
 field_output = [un, eta_out, vortn, qn, q2Dn]
 
 # output function
