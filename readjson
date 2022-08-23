@@ -138,9 +138,7 @@ class AnalyseJson:
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
-        labels = ['Original','Simplified solver']
         cols = [5, 6, 7]
-        cols = [5, 6]
         
         # Extract and compute relevant performance measures.
         totdata = {}
@@ -213,6 +211,7 @@ f23 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/IMR/avg/w5aug.json
 f24 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/NEWENERGY/NEWGRAVITY/w5aug.json'
 f25 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/NEWGRAVITY/w5aug.json'
 f26 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref1/testref4/newparams/w5aug.json'
+f27 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a20/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
@@ -226,15 +225,17 @@ aj = AnalyseJson()
 
 # ======= Upwind softsign values
 # aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j3=f7, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f20, j5=f27, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref4
 # aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j1=f20, j2=f21, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref5
+# aj.multiplot(j1=f15, j3=f16, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.perinf(j3=f13, j2=f14)
+# aj.perinf(j3=f15, j2=f16) # IMR v PI
+aj.perinf(j3=f15, j2=f13) # upwind v avg
 
 # ======= Ref4 vs Ref5
 # aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
@@ -247,7 +248,7 @@ aj = AnalyseJson()
 # aj.multiplot(j1=f7, j2=f20, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 
 # ======= Upwind vs avg
-aj.multiplot(j3=f13, j2=f15, colnum=4, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f13, j2=f15, colnum=4, normalise=True, semilog=True, cmap='coolwarm')
 
 
 
