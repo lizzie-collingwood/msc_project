@@ -2,7 +2,9 @@
 simulation, with energy conserving space discretisation including
 upwinding for u, D, and semi-implicit time discretisation"""
 import logging
+import json
 from time import ctime
+from petsc4py import PETSc
 from numpy import float64, zeros, arctan2, arcsin
 from numpy import sqrt as np_sqrt
 from netCDF4 import Dataset
@@ -15,11 +17,30 @@ from firedrake import IcosahedralSphereMesh, SpatialCoordinate, exp, \
     DumbCheckpoint, FILE_READ, FILE_CREATE, COMM_WORLD, \
     Min, Max, atan_2, asin, cos, sin, VectorFunctionSpace, Mesh, \
     functionspaceimpl, READ, WRITE, par_loop, op2, ge, le, interpolate
+import argparse
+parser = argparse.ArgumentParser(description='Williamson 5 testcase for augmented Lagrangian solver.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--base_level', type=int, default=1, help='Base refinement level of icosahedral grid for MG solve.')
+parser.add_argument('--ref_level', type=int, default=5, help='Refinement level of icosahedral grid.')
+parser.add_argument('--dmax', type=float, default=15, help='Final time in days.')
+parser.add_argument('--dumpt', type=float, default=24, help='Dump time in hours.')
+parser.add_argument('--dt', type=float, default=1, help='Timestep in hours.')
+parser.add_argument('--filename', type=str, default='w5aug')
+parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
+parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
+parser.add_argument("--upwind", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
+parser.add_argument("--softsign", type=float, default=0, help='Determines the level of upwind switch softening.')
+parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
+parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
+args = parser.parse_known_args()
+args = args[0]
 
 # discretisation parameters
-ref_level = 4
+ref_level = args.ref_level
 dt = 120.
-tmax = 24*60*60*25.
+tmax = 24*60*60*args.dmax
 init_t = 0.
 maxk = 4
 field_dumpfreq = 24*30*5 # Dump every 5 days
@@ -55,7 +76,7 @@ logger.info("Starting Initial condition, and function setup at {0}" \
 x = SpatialCoordinate(mesh)
 f = Function(FunctionSpace(mesh, "CG", 1))
 f.interpolate(2*Omega*x[2]/R)
-g, H = 9.810616, 5960.
+g, H = 9.8, 5960.
 u_0 = 20.
 
 def latlon_coords(mesh):
@@ -150,6 +171,14 @@ else:
 Frhs = unk*Dnk/3. + un*Dnk/6. + unk*Dn/6. + un*Dn/3.
 K = inner(un, un)/3. + inner(un, unk)/3. + inner(unk, unk)/3.
 Prhs = g*(Dbar + b) + 0.5*K
+
+# Compute conserved quantities.
+mass = D0*dx
+energy = (D0*inner(u0, u0)/2 + g*inner(D0+b,D0+b)/2)*dx
+
+# Compute absolute vorticity and enstrophy
+Q = Dbar*qn*dx
+Z = Dbar*qn**2*dx
 
 gm_prms = {'ksp_type': 'gmres', 'pc_type': 'bjacobi', 'sub_pc_type': 'ilu'}
 lu_prms = {"ksp_type":"preonly", "pc_type":"lu"}
@@ -263,6 +292,8 @@ xnk.assign(xn)
 t = init_t
 count = 0
 while t < tmax - 0.5*dt:
+    PETSc.Sys.Print(t)
+    PETSc.Sys.Print('Percentage complete: ', t/tmax)
     logger.info("Timestep nr {0} at {1}".format(count, ctime()))
     t += dt
 
