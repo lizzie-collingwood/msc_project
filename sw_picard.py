@@ -173,8 +173,8 @@ K = inner(un, un)/3. + inner(un, unk)/3. + inner(unk, unk)/3.
 Prhs = g*(Dbar + b) + 0.5*K
 
 # Compute conserved quantities.
-mass = D0*dx
-energy = (D0*inner(u0, u0)/2 + g*inner(D0+b,D0+b)/2)*dx
+mass = Dn*dx
+energy = (Dn*inner(un, un)/2 + g*inner(Dn+b,Dn+b)/2)*dx
 
 # Compute absolute vorticity and enstrophy
 Q = Dbar*qn*dx
