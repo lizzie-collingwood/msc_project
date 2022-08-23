@@ -330,7 +330,9 @@ extime = time.time() - start
 print('execution_time:', extime)
 
 # Save the performance and solution data to json.
-argdict = str(vars(args))
+# Save the performance and solution data to json.
+argz = {'base_level': args.base_level, 'ref_level': args.ref_level, 'dmax': args.dmax, 'dumpt': args.dumpt, 'dt': args.dt, 'filename': args.filename, 'coords_degree': args.coords_degree, 'degree': args.degree, 'upwind': True, 'softsign': 0, 'poisson': 'Picard', 'snes_rtol': 1e-8, 'atol': args.atol, 'rtol': args.rtol, 'show_args': args.show_args}
+argdict = str(argz)
 with open(name+'.json', 'w') as f:
     json.dump({'options': argdict, 'data': simdata}, f)
 
