@@ -29,10 +29,6 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours.')
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
-parser.add_argument("--upwind", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Calculation of an approximation of u: "avg" or "upwind".')
-parser.add_argument("--softsign", type=float, default=0, help='Determines the level of upwind switch softening.')
-parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', const=True, default=True, help='Solve using the Poisson integrator if true; solves with implicit midpoint rule if false.')
-parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
@@ -50,7 +46,7 @@ ref_level = args.ref_level
 dt = 60*60*args.dt
 tmax = 24*60*60*args.dmax
 init_t = 0.
-maxk = 4
+maxk = 4 # FIXME: maybe change this to 5 to match?
 field_dumpfreq = 24*30*5 # Dump every 5 days
 t = 0.
 hdump = args.dumpt
@@ -108,7 +104,7 @@ uexpr = u_0*as_vector([-x[1], x[0], 0.0])/R
 Dexpr = H - ((R*Omega*u_0 + 0.5*u_0**2)*x[2]**2/Rsq)/g - bexpr
 
 # Build function spaces
-degree = 2
+degree = args.degree + 1
 family = ("DG", "BDM", "CG")
 W0 = FunctionSpace(mesh, family[0], degree-1, family[0])
 W1_elt = FiniteElement(family[1], triangle, degree, variant='integral')
@@ -325,6 +321,8 @@ while t < tmax - 0.5*dt:
     print("enstrophy:", _Z)
 
     # Run solvers
+    its = 0
+    nonlin_its = 0
     for _ in range(maxk):
         et0 = time()
         u_rec_solver.solve()
@@ -335,20 +333,17 @@ while t < tmax - 0.5*dt:
         f_u_solver.solve()
         up += uf
 
-        # Get the number of linear iterations
-        its = nsolver.snes.getLinearSolveIterations()
-        nonlin_its = nsolver.snes.getIterationNumber()
-
         uD_solver.solve()
         xnk += xd
         extime = time() - et0
 
-    # if tdump > dumpt - dt*0.5:
-    #     etan.assign(D0 - H + b)
-    #     un.assign(u0)
-    #     qsolver.solve()
-    #     file_sw.write(un, etan, qn)
-    #     tdump -= dumpt
+        # Get the number of linear iterations
+        its += u_rec_solver.snes.getLinearSolveIterations()
+        its += Psolver.snes.getLinearSolveIterations()
+        its += D_ad_solver.snes.getLinearSolveIterations()
+        its += u_ad_solver.snes.getLinearSolveIterations()
+        its += f_u_solver.snes.getLinearSolveIterations()
+        nonlin_its += uD_solver.snes.getIterationNumber()
 
     # Update field
     xn.assign(xnk)
@@ -359,13 +354,13 @@ while t < tmax - 0.5*dt:
     count += 1
     write_output(t, count, field_dumpfreq, outfile, field_output)
 
-
 # Print execution time
 extime = time() - start
 print('execution_time:', extime)
 
 # Save the performance and solution data to json.
-argdict = str(vars(args))
+argz = {'base_level': args.base_level, 'ref_level': args.ref_level, 'dmax': args.dmax, 'dumpt': args.dumpt, 'dt': args.dt, 'filename': args.filename, 'coords_degree': args.coords_degree, 'degree': args.degree, 'upwind': True, 'softsign': 0, 'poisson': 'Picard', 'snes_rtol': 1e-8, 'atol': args.atol, 'rtol': args.rtol, 'show_args': args.show_args}
+argdict = str(argz)
 with open(name+'.json', 'w') as f:
     json.dump({'options': argdict, 'data': simdata}, f)
 
@@ -374,7 +369,7 @@ with open(name+'_options.txt', 'w') as f:
     f.write(argdict)
 
 # Print performance metrics
-PETSc.Sys.Print("Iterations", itcount,
-                "dt", dt,
+PETSc.Sys.Print("Iterations", count,
+                "dt", args.dt,
                 "ref_level", args.ref_level,
                 "dmax", args.dmax)
