@@ -549,6 +549,9 @@ while t < tmax + 0.5*dt:
     its = nsolver.snes.getLinearSolveIterations()
     nonlin_its = nsolver.snes.getIterationNumber()
 
+    # Solve for potential vorticity
+    qsolver.solve()
+
     # Compute and print quantities that should be conserved
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
@@ -565,7 +568,6 @@ while t < tmax + 0.5*dt:
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
         un.assign(u0)
-        qsolver.solve()
         file_sw.write(un, etan, qn)
         tdump -= dumpt
     stepcount += 1
