@@ -302,6 +302,9 @@ while t < tmax + 0.5*dt:
     nonlin_its = nsolver.snes.getIterationNumber()
 
     # Compute and print quantities that should be conserved
+
+    qsolver.solve() # FIXME: reorganise
+
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
     _Q = fd.assemble(Q)
@@ -319,7 +322,6 @@ while t < tmax + 0.5*dt:
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
         un.assign(u0)
-        qsolver.solve()
         file_sw.write(un, etan, qn)
         tdump -= dumpt
 
