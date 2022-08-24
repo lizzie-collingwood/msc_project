@@ -323,6 +323,7 @@ while t < tmax - 0.5*dt:
     its = 0
     nonlin_its = 0
     for _ in range(maxk):
+        nonlin_its += 1
         et0 = time()
         u_rec_solver.solve()
         Psolver.solve()
@@ -337,12 +338,8 @@ while t < tmax - 0.5*dt:
         extime = time() - et0
 
         # Get the number of linear iterations
-        its += u_rec_solver.snes.getLinearSolveIterations()
-        its += Psolver.snes.getLinearSolveIterations()
-        its += D_ad_solver.snes.getLinearSolveIterations()
-        its += u_ad_solver.snes.getLinearSolveIterations()
-        its += f_u_solver.snes.getLinearSolveIterations()
-        nonlin_its += uD_solver.snes.getIterationNumber()
+        its += uD_solver.snes.getLinearSolveIterations()
+        # TODO: increase maxk so energy conservation is the same as ours (check in paper)
 
     # Update field
     xn.assign(xnk)
