@@ -29,6 +29,7 @@ parser.add_argument('--dt', type=float, default=1, help='Timestep in hours.')
 parser.add_argument('--filename', type=str, default='w5aug')
 parser.add_argument('--coords_degree', type=int, default=1, help='Degree of polynomials for sphere mesh approximation.')
 parser.add_argument('--degree', type=int, default=1, help='Degree of finite element space (the DG space).')
+parser.add_argument('--maxk', type=int, default=1, help='Degree of finite element space (the DG space).')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
@@ -46,7 +47,7 @@ ref_level = args.ref_level
 dt = 60*60*args.dt
 tmax = 24*60*60*args.dmax
 init_t = 0.
-maxk = 4 # FIXME: maybe change this to 5 to match?
+maxk = args.maxk
 field_dumpfreq = 24*30*5 # Dump every 5 days
 t = 0.
 hdump = args.dumpt
@@ -355,7 +356,7 @@ extime = time() - start
 print('execution_time:', extime)
 
 # Save the performance and solution data to json.
-argz = {'base_level': args.base_level, 'ref_level': args.ref_level, 'dmax': args.dmax, 'dumpt': args.dumpt, 'dt': args.dt, 'filename': args.filename, 'coords_degree': args.coords_degree, 'degree': args.degree, 'upwind': True, 'softsign': 0, 'poisson': 'Picard', 'snes_rtol': 1e-8, 'atol': args.atol, 'rtol': args.rtol, 'show_args': args.show_args}
+argz = {'base_level': args.base_level, 'ref_level': args.ref_level, 'dmax': args.dmax, 'dumpt': args.dumpt, 'dt': args.dt, 'filename': args.filename, 'coords_degree': args.coords_degree, 'degree': args.degree, 'upwind': True, 'softsign': 0, 'poisson': 'Picard', 'snes_rtol': 1e-8, 'atol': args.atol, 'rtol': args.rtol, 'show_args': args.show_args, 'maxk':args.maxk}
 argdict = str(argz)
 with open(name+'.json', 'w') as f:
     json.dump({'options': argdict, 'data': simdata}, f)
