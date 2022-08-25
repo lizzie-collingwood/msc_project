@@ -25,7 +25,7 @@ parser.add_argument('--kspmg', type=int, default=3, help='Max number of KSP iter
 parser.add_argument('--tlblock', type=str, default='mg', help='Solver for the velocity-velocity block. mg==Multigrid with patchPC, lu==direct solver with MUMPS, patch==just do a patch smoother. Default is mg')
 parser.add_argument('--schurpc', type=str, default='mass', help='Preconditioner for the Schur complement. mass==mass inverse, helmholtz==helmholtz inverse * laplace * mass inverse. Default is mass')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
-parser.add_argument('--time_scheme', type=int, default=0, help='Timestepping scheme. 0=Crank-Nicholson. 1=Implicit midpoint rule.')
+parser.add_argument('--time_scheme', type=int, default=1, help='Timestepping scheme. 0=Crank-Nicholson. 1=Implicit midpoint rule.')
 
 args = parser.parse_known_args()
 args = args[0]
