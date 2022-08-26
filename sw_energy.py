@@ -334,6 +334,7 @@ print('execution_time:', extime)
 
 # Construct a Courant mesh
 if args.courant_mesh:
+    un = u0
     DG0 = fd.FunctionSpace(mesh, "DG", 0)
     One = fd.Function(DG0).assign(1.0)
     n = fd.FacetNormal(mesh)
