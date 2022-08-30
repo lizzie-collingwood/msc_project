@@ -349,6 +349,8 @@ if args.courant_mesh:
     Courant = fd.Function(DG0, name="Courant")
     fd.assemble(Courant_num_form, tensor=Courant_num)
     Courant.assign(Courant_num/Courant_denom)
+    file_courant = fd.File(name+'.pvd')
+    file_courant.write(Courant)
 
 # Save the performance and solution data to json.
 argdict = str(vars(args))
