@@ -27,8 +27,9 @@ class AnalyseJson:
         'rtol': {'rename': 'Linear stopping criteration: relative residual norm'},
         'atol': {'rename': 'Linear stopping criteration: absolute residual norm'},
         'softsign': {'rename': '$a$ ='},
+        'ref_level': {'rename': 'Resolution'}
     }
-    ignore_dict = ['base_level']
+    ignore_dict = ['base_level', 'dt']
 
     def __init__(self, file=None):
         if file is not None:
@@ -95,7 +96,7 @@ class AnalyseJson:
         """Normalise the data slice according to the initial value."""
         return (slice - slice[0]) / slice[0]
 
-    def multiplot(self, normalise=False, semilog=False, cumsum=False, cmap='viridis', sawtooth=False, colnum=1, **kwargs):
+    def multiplot(self, normalise=False, semilog=False, cumsum=False, cmap='viridis', sawtooth=False, colnum=1, lw=1, **kwargs):
         """
         Plot multiple json file data.
         :param kwargs: any number of strings describing path to json files.
@@ -104,7 +105,7 @@ class AnalyseJson:
         :param colnum: int, identifies which column of the output array to plot.
         """
         # Set the colour scheme
-        colours = cmr.take_cmap_colors(cmap, len(kwargs), return_fmt='hex')
+        colours = cmr.take_cmap_colors(cmap, len(kwargs)+1, return_fmt='hex')
 
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
@@ -119,10 +120,10 @@ class AnalyseJson:
             if cumsum: column = np.cumsum(column)
             xx = arr[1:, 0]
             if sawtooth:
-                r = int(24/ops['dt'][i])
+                r = int(12/ops['dt'][i])
                 xx = np.r_['1,2', xx[:r], xx[r::r]][0]
                 column = np.r_['1,2',column[:r], column[r::r]][0]
-            if semilog: plt.semilogy(xx, np.abs(column), label=labels[i], color=colours[i])
+            if semilog: plt.semilogy(xx, np.abs(column), label=labels[i], color=colours[i], lw=lw)
             else: plt.plot(xx, column, label=labels[i], color=colours[i])
             
         # Axes labels
@@ -189,7 +190,7 @@ class AnalyseJson:
         plt.show()
         
 
-# Provide path to JSON files
+## Provide path to JSON files
 f1 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/w5aug.json'
 f1a = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/PI/upwind/NEWENERGY/w5aug.json'
 f2 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref2/IMR/upwind/w5aug.json'
@@ -223,6 +224,9 @@ f30 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/sw_im/IMR/w5aug.js
 f31 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/Pic/maxk16/w5aug.json'
 f32 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/Pic/maxk8/w5aug.json'
 f33 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/sw_im/CN/w5aug.json'
+f34 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref6/PI/upwind/w5aug.json'
+f35 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a10/w5aug.json'
+f36 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/PI/upwind/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
@@ -235,8 +239,8 @@ aj = AnalyseJson()
 # aj.perinf(j3=f7, j2=f26)
 
 # ======= Upwind softsign values
-# aj.multiplot(j3=f7, j2=f9, j1=f8, j4=f10, j6=f11, j7=f12, j5=f6, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j3=f20, j5=f27, j2=f29, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f20, j1=f35, j5=f27, j2=f29, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f20, j1=f35, j5=f27, j2=f29, colnum=4, normalise=True, sawtooth=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref4
 # aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
@@ -247,15 +251,16 @@ aj = AnalyseJson()
 # aj.perinf(j3=f20, j4=f28, j5=f31, j6=f32) # PI v Pic 4,8,16
 
 # ======= Ref5
-aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f13, j2=f1, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, normalise=True, semilog=True, cmap='coolwarm')
 # aj.perinf(j3=f15, j2=f16) # IMR v PI
 # aj.perinf(j3=f15, j2=f13) # upwind v avg
 
-# ======= Ref4 vs Ref5
-# aj.multiplot(j1=f20, j2=f15, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j1=f20, j2=f15, colnum=7, normalise=False, semilog=False, cmap='coolwarm')
-# aj.perinf(j3=f20, j2=f15)
+# ======= Ref3 vs Ref4 vs Ref5 vs Ref6
+aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=2, lw=0.5, normalise=True, semilog=True, cmap='ocean')
+# aj.multiplot(j1=f20, j2=f15, j3=f34, colnum=4, lw=0.5, normalise=True, semilog=True, sawtooth=True, cmap='ocean')
+# aj.perinf(j1=f20, j2=f15, j3=f34)
 
 # ======= Picard vs IMR vs PI
 # aj.multiplot(j1=f1a, j2=f2, j4=f17a, j5=f17b, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
