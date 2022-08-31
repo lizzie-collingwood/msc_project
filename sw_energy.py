@@ -334,21 +334,27 @@ print('execution_time:', extime)
 
 # Construct a Courant mesh
 if args.courant_mesh:
-    un = u0
+    # un = u0
+    n = fd.FacetNormal(mesh)
+
+    def both(x):
+        return 2*fd.avg(x)
     DG0 = fd.FunctionSpace(mesh, "DG", 0)
     One = fd.Function(DG0).assign(1.0)
-    n = fd.FacetNormal(mesh)
     unn = 0.5*(fd.inner(-un, n) + abs(fd.inner(-un, n))) # gives fluxes *into* cell only
     v = fd.TestFunction(DG0)
     Courant_num = fd.Function(DG0, name="Courant numerator")
     Courant_num_form = dT*(
-        2*fd.avg(unn*v)*(fd.dS_v + fd.dS_h)
-        + unn*v*fd.ds_tb)
+        both(unn*v)*(fd.dS_v + fd.dS_h)
+        + unn*v*fd.ds_tb
+    )
     Courant_denom = fd.Function(DG0, name="Courant denominator")
     fd.assemble(One*v*fd.dx, tensor=Courant_denom)
     Courant = fd.Function(DG0, name="Courant")
+
     fd.assemble(Courant_num_form, tensor=Courant_num)
     Courant.assign(Courant_num/Courant_denom)
+
     file_courant = fd.File(name+'.pvd')
     file_courant.write(Courant)
 
