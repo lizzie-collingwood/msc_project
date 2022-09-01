@@ -291,7 +291,13 @@ def write_output(t, counter, dfr, outf, fld_out):
 energy0 = assemble(energy)
 simdata = {t: [assemble(mass), energy0, assemble(Q), assemble(Z), 0, 0, 0]}
 
-write_output(init_t, 0, field_dumpfreq, outfile, field_output)
+# WRITE OUTPUT
+qsolver.solve()
+vortsolver.solve()
+q2Dn.project(qn**2*Dn)
+eta_out.interpolate(Dn + b)        
+outfile.write(*field_output)
+# write_output(init_t, 0, field_dumpfreq, outfile, field_output)
 
 logger.info("Finished setting up output at {0}".format(ctime()))
 
@@ -349,7 +355,13 @@ while t < tmax - 0.5*dt:
 
     # Write output
     count += 1
-    write_output(t, count, field_dumpfreq, outfile, field_output)
+    # field_output = [un, eta_out, vortn, qn, q2Dn]
+    # write_output(t, count, field_dumpfreq, outfile, field_output)
+    qsolver.solve()
+    vortsolver.solve()
+    q2Dn.project(qn**2*Dn)
+    eta_out.interpolate(Dn + b)        
+    outfile.write(*field_output)
 
 # Print execution time
 extime = time() - start
