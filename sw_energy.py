@@ -249,6 +249,9 @@ minarg = fd.Min(pow(rl, 2),
 bexpr = 2000.0*(1 - fd.sqrt(minarg)/rl)
 b.interpolate(bexpr)
 
+file_top = fd.File('w5aug_topo.pvd')
+file_top.write(b)
+
 # Initial conditions
 u0, D0, F0 = Un.split()
 u0.assign(un)
