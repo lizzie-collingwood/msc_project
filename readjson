@@ -112,6 +112,7 @@ class AnalyseJson:
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
         # labels = ['ASM-MG','Picard, $k=4$','Picard, $k=8$','Picard, $k=16$']
         # labels = ['Standard IMR','Almost-Poisson IMR','ASM-MG PI','Picard PI']
+        labels = ['Original', 'Simplified']
 
         # Plot the json data
         plt.figure()
@@ -146,6 +147,7 @@ class AnalyseJson:
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
         cols = [5, 6, 7]
+        labels = ['Original', 'Simplified']
         
         # Extract and compute relevant performance measures.
         totdata = {}
@@ -255,6 +257,7 @@ f34 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref6/PI/upwind/w5aug.js
 f35 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a10/w5aug.json'
 f36 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/PI/upwind/w5aug.json'
 f37 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/degree2/w5aug.json'
+f38 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/PI/upwind/elimD1/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
@@ -272,7 +275,7 @@ aj = AnalyseJson()
 
 # ======= Ref4
 # aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm') # upwind vs avg; IMR vs PI
-aj.multiplot(j1=f20, j2=f37, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f20, j2=f37, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.perinf(j1=f22, j2=f20, j3=f32, j4=f30) # PI v IMR v Pic
 # aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=4, normalise=True,  sawtooth=True, semilog=True, cmap='coolwarm')
@@ -285,7 +288,8 @@ aj.multiplot(j1=f20, j2=f37, colnum=2, normalise=True, semilog=True, cmap='coolw
 # aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j3=f13, j2=f1, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j3=f13, j2=f15, colnum=4, sawtooth=True, normalise=False, semilog=False, cmap='coolwarm')
-# aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j1=f15, j2=f38, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm') # elim D1
+aj.perinf(j3=f15, j2=f38) # elim D1
 # aj.perinf(j3=f15, j2=f16) # IMR v PI
 # aj.perinf(j3=f15, j2=f13) # upwind v avg
 
