@@ -105,12 +105,13 @@ class AnalyseJson:
         :param colnum: int, identifies which column of the output array to plot.
         """
         # Set the colour scheme
-        colours = cmr.take_cmap_colors(cmap, len(kwargs)+1, return_fmt='hex')
+        colours = cmr.take_cmap_colors(cmap, len(kwargs), return_fmt='hex')
 
         # Extract data, options and labels from json files.
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
-        # labels = ['PI','Maxk 4','Maxk 16','Maxk 8']
+        # labels = ['ASM-MG','Picard, $k=4$','Picard, $k=8$','Picard, $k=16$']
+        # labels = ['Standard IMR','Almost-Poisson IMR','ASM-MG PI','Picard PI']
 
         # Plot the json data
         plt.figure()
@@ -120,7 +121,7 @@ class AnalyseJson:
             if cumsum: column = np.cumsum(column)
             xx = arr[1:, 0]
             if sawtooth:
-                r = int(12/ops['dt'][i])
+                r = int(24/ops['dt'][i])
                 xx = np.r_['1,2', xx[:r], xx[r::r]][0]
                 column = np.r_['1,2',column[:r], column[r::r]][0]
             if semilog: plt.semilogy(xx, np.abs(column), label=labels[i], color=colours[i], lw=lw)
@@ -134,7 +135,7 @@ class AnalyseJson:
         # Xtick labels + legend
         dmax = max(ops['dmax'])
         plt.xticks(np.arange(dmax+1))
-        if len(kwargs)>1: plt.legend()
+        if len(kwargs)>1: plt.legend(loc='lower right')
         plt.show()
 
     def perinf(self, **kwargs):
@@ -162,13 +163,19 @@ class AnalyseJson:
 
         # Add extra columns
         df['Avg. linear its / nonlinear its'] = df.iloc[:, 0] / df.iloc[:, 1]
-        df['Avg. linear its / timestep'] = df.iloc[:, 0] / df.iloc[:, 2]
-        df['Avg. nonlinear its / timestep'] = df.iloc[:, 1] / df.iloc[:, 2]
+        df['Avg. linear its / timestep'] = df.iloc[:, 0] / df.iloc[:, 3]
+        df['Avg. nonlinear its / timestep'] = df.iloc[:, 1] / df.iloc[:, 3]
+        df['Avg. linear its / s'] = df.iloc[:, 0] / df.iloc[:, 2]
+        df['Avg. nonlinear its / s'] = df.iloc[:, 1] / df.iloc[:, 2]
+        df['Avg. seconds / timestep'] = df.iloc[:, 2] / df.iloc[:, 3]
+        df['Avg. seconds / lin'] = df.iloc[:, 2] / df.iloc[:, 0]
+        df['Avg. seconds / nonlin'] = df.iloc[:, 2] / df.iloc[:, 1]
 
         # Write options to text file.
         df.round(2).to_csv('dataperinf.txt')
 
-        print(df.round(2))
+        print(df.round(3))
+        return df
 
     @staticmethod
     def softsignplot():
@@ -186,6 +193,26 @@ class AnalyseJson:
         plt.xticks(np.arange(-7,8), labels=[])
         plt.xlim([-7,7])
         plt.hlines(y=0, xmin=-7, xmax=7, color='darkgray')
+        plt.legend()
+        plt.show()
+
+    def plotperformance(self, df):
+        # Set the colour scheme
+        colours = cmr.take_cmap_colors('coolwarm', 4, return_fmt='hex')
+
+        # df = self.perinf(kwargs)
+        yy = df['Avg. seconds / timestep']
+        xx = [4, 2, 1, 0.5]
+        plt.figure()
+        plt.plot(xx, yy, color=colours[-1], label='True scaling')
+        zz = [256 / i for i in xx]
+        plt.plot(xx, zz, color=colours[0], label='Weak scaling', linestyle = 'dashed')
+        plt.semilogx(base=2)
+        plt.semilogy(base=2)
+        plt.xlabel('Resolution')
+        plt.ylabel('Avg. seconds / timestep')
+        plt.xticks([4, 2, 1, 0.5], labels=['3','4','5','6'])
+        plt.gca().invert_xaxis()
         plt.legend()
         plt.show()
         
@@ -227,6 +254,7 @@ f33 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/sw_im/CN/w5aug.jso
 f34 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref6/PI/upwind/w5aug.json'
 f35 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a10/w5aug.json'
 f36 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/PI/upwind/w5aug.json'
+f37 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/degree2/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
@@ -243,24 +271,30 @@ aj = AnalyseJson()
 # aj.multiplot(j3=f20, j1=f35, j5=f27, j2=f29, colnum=4, normalise=True, sawtooth=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref4
-# aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j1=f20, j2=f21, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.perinf(j1=f22, j2=f20, j3=f28, j4=f30) # PI v IMR v Pic
-# aj.multiplot(j1=f22, j2=f20, j3=f28, j4=f30, j5=f33, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
-# aj.multiplot(j3=f20, j4=f28, j5=f31, j6=f32, colnum=2, normalise=True, semilog=True, cmap='coolwarm') # PI v Pic 4,8,16
-# aj.perinf(j3=f20, j4=f28, j5=f31, j6=f32) # PI v Pic 4,8,16
+# aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm') # upwind vs avg; IMR vs PI
+aj.multiplot(j1=f20, j2=f37, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.perinf(j1=f22, j2=f20, j3=f32, j4=f30) # PI v IMR v Pic
+# aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=4, normalise=True,  sawtooth=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f20, j4=f28, j5=f32, j6=f31, colnum=3, lw=0.6, normalise=True, sawtooth=True, semilog=True, cmap='winter') # PI v Pic 4,8,16
+# aj.multiplot(j3=f20, j4=f28, j5=f32, j6=f31, colnum=2, lw=0.6, normalise=True, semilog=True, cmap='winter') # PI v Pic 4,8,16
+# aj.perinf(j4=f30, j1=f22, j2=f20, j3=f32) # PI v Pic 4,8,16
+# aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=7, cmap='coolwarm')
 
 # ======= Ref5
 # aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j3=f13, j2=f1, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j3=f13, j2=f15, colnum=4, sawtooth=True, normalise=False, semilog=False, cmap='coolwarm')
 # aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, normalise=True, semilog=True, cmap='coolwarm')
 # aj.perinf(j3=f15, j2=f16) # IMR v PI
 # aj.perinf(j3=f15, j2=f13) # upwind v avg
 
 # ======= Ref3 vs Ref4 vs Ref5 vs Ref6
-aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=2, lw=0.5, normalise=True, semilog=True, cmap='ocean')
-# aj.multiplot(j1=f20, j2=f15, j3=f34, colnum=4, lw=0.5, normalise=True, semilog=True, sawtooth=True, cmap='ocean')
-# aj.perinf(j1=f20, j2=f15, j3=f34)
+# aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=2, lw=0.5, normalise=True, semilog=True, cmap='ocean')
+# aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=3, lw=0.5, normalise=True, semilog=True, sawtooth=True, cmap='ocean')
+# df = aj.perinf(j0=f36, j1=f20, j2=f15, j3=f34)
+# aj.plotperformance(df)
+# aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=7, cmap='coolwarm')
 
 # ======= Picard vs IMR vs PI
 # aj.multiplot(j1=f1a, j2=f2, j4=f17a, j5=f17b, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
