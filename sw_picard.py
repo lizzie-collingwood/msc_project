@@ -350,18 +350,17 @@ while t < tmax - 0.5*dt:
 
     # Update field
     xn.assign(xnk)
+    qsolver.solve()
 
     simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
     # Write output
     count += 1
-    # field_output = [un, eta_out, vortn, qn, q2Dn]
-    # write_output(t, count, field_dumpfreq, outfile, field_output)
-    qsolver.solve()
-    vortsolver.solve()
-    q2Dn.project(qn**2*Dn)
-    eta_out.interpolate(Dn + b)        
-    outfile.write(*field_output)
+    if tdump > dumpt - dt*0.5:
+        vortsolver.solve()
+        q2Dn.project(qn**2*Dn)
+        eta_out.interpolate(Dn + b)        
+        outfile.write(*field_output)
 
 # Print execution time
 extime = time() - start
