@@ -348,18 +348,18 @@ while t < tmax - 0.5*dt:
         its += uD_solver.snes.getLinearSolveIterations()
         # TODO: increase maxk so energy conservation is the same as ours (check in paper)
 
-    # Update field
+    # Update fields
     xn.assign(xnk)
     qsolver.solve()
+    q2Dn.project(qn**2*Dn)
+    vortsolver.solve()
+    eta_out.interpolate(Dn + b) 
 
     simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
     # Write output
     count += 1
-    if tdump > dumpt - dt*0.5:
-        vortsolver.solve()
-        q2Dn.project(qn**2*Dn)
-        eta_out.interpolate(Dn + b)        
+    if tdump > dumpt - dt*0.5:       
         outfile.write(*field_output)
 
 # Print execution time
