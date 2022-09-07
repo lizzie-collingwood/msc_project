@@ -272,13 +272,17 @@ qsolver = fd.LinearVariationalSolver(vprob,
 Q = Dh*qn*dx
 Z = Dh*qn**2*dx
 
+# Compute geostrophic balance error
+gbal_eqn = (g*fd.grad(D0+b) + f*fd.perp(u0))*dx
+gbal0 = fd.assemble(gbal_eqn)
+
 # Write initial fields into a file which can be interpreted by software ParaView
 file_sw = fd.File(name+'.pvd')
 etan.assign(D0 - H + b)
 
 # Store the conserved properties data
 energy0 = fd.assemble(energy)
-simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0, 0]}
+simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0, 0, gbal0]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
@@ -306,13 +310,13 @@ while t < tmax + 0.5*dt:
     nonlin_its = nsolver.snes.getIterationNumber()
 
     # Compute and print quantities that should be conserved
-
-    qsolver.solve() # FIXME: reorganise
+    qsolver.solve()
 
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
     _Q = fd.assemble(Q)
     _Z = fd.assemble(Z)
+    _gbal = fd.assemble(gbal_eqn)
     print("mass:", _mass)
     print("energy:", (energy0 - _energy) / energy0)
     print("abs vorticity:", _Q)
@@ -321,7 +325,7 @@ while t < tmax + 0.5*dt:
     # Update field
     Un.assign(Unp1)
 
-    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime, _gbal]})
 
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
