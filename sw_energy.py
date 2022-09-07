@@ -173,6 +173,7 @@ p_vel_eqn = (
 # Compute conserved quantities.
 mass = D0*dx
 energy = (D0*fd.inner(u0, u0)/2 + g*fd.inner(D0+b,D0+b)/2)*dx
+gbal_eqn = (g*fd.grad(D0+b) + f*perp(u0))*dx
 
 # Tell petsce how to solve nonlinear equations
 mg_parameters = {
@@ -268,14 +269,6 @@ qparams = {'ksp_type':'cg'}
 qsolver = fd.LinearVariationalSolver(vprob,
                                      solver_parameters=qparams)
 
-# Compute geostrophic balance error
-x = fd.TestFunction(V1)
-gbalerr = fd.Function(V1, name="Geostrophic balance error")
-gbal_eqn = (fd.inner((g*fd.grad(D0+b) + f*perp(u0)), x)-gbalerr)*dx
-gbalprob = fd.LinearVariationalProblem(fd.lhs(gbal_eqn), fd.rhs(gbal_eqn), qn)
-gbalsolver = fd.LinearVariationalSolver(gbalprob,
-                                     solver_parameters=qparams)
-
 # Compute absolute vorticity and enstrophy
 Q = Dh*qn*dx
 Z = Dh*qn**2*dx
@@ -289,21 +282,23 @@ vrt_eqn = eta*q_*dx + fd.inner(perp(fd.grad(eta)), un)*dx
 vort_problem = fd.LinearVariationalProblem(fd.lhs(vrt_eqn), fd.rhs(vrt_eqn), vortn, constant_jacobian=True)
 vortsolver = fd.LinearVariationalSolver(vort_problem, solver_parameters=cg_prms)
 
+# Compute geostrophic balance error
+gbal0 = fd.assemble(gbal_eqn)
+
 # Write initial fields into a file which can be interpreted by software ParaView
 file_sw = fd.File(name+'.pvd')
 etan.assign(D0 - H + b)
 
 # Store the conserved properties data
 energy0 = fd.assemble(energy)
-simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0, 0]}
+simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0, 0, gbal0]}
 
 # Store initial conditions in functions to be used later on
 un.assign(u0)
 qsolver.solve()
 F0.project(u0*D0)
 vortsolver.solve()
-gbalsolver.solve()
-file_sw.write(un, etan, qn, vortn, gbalerr)
+file_sw.write(un, etan, qn, vortn)
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
@@ -327,13 +322,12 @@ while t < tmax + 0.5*dt:
     # Compute and print quantities that should be conserved
     qsolver.solve()
     vortn.solve()
-    gbalsolver.solve()
 
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
     _Q = fd.assemble(Q)
     _Z = fd.assemble(Z)
-    # _gbal = fd.assemble(gbal_eqn)
+    _gbal = fd.assemble(gbal_eqn)
     print("mass:", _mass)
     print("energy:", (energy0 - _energy) / energy0)
     print("abs vorticity:", _Q)
@@ -342,12 +336,12 @@ while t < tmax + 0.5*dt:
     # Update field
     Un.assign(Unp1)
 
-    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
+    simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime, _gbal]})
 
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
         un.assign(u0)
-        file_sw.write(un, etan, qn, vortn, gbalerr)
+        file_sw.write(un, etan, qn, vortn)
         tdump -= dumpt
 
     itcount += its
