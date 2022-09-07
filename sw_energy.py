@@ -173,7 +173,7 @@ p_vel_eqn = (
 # Compute conserved quantities.
 mass = D0*dx
 energy = (D0*fd.inner(u0, u0)/2 + g*fd.inner(D0+b,D0+b)/2)*dx
-gbal_eqn = (g*fd.grad(D0+b) + f*perp(u0))*dx
+gbal_eqn = (g*fd.grad(D0) + f*perp(u0))*dx
 
 # Tell petsce how to solve nonlinear equations
 mg_parameters = {
