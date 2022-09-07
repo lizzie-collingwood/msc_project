@@ -321,7 +321,7 @@ while t < tmax + 0.5*dt:
 
     # Compute and print quantities that should be conserved
     qsolver.solve()
-    vortn.solve()
+    vortsolver.solve()
 
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
