@@ -273,9 +273,11 @@ Q = Dh*qn*dx
 Z = Dh*qn**2*dx
 
 # Vorticity
+eta = fd.TestFunction(V0)
+q_ = fd.TrialFunction(V0)
 vortn = fd.Function(V0, name='Relative Vorticity')
 cg_prms = {'ksp_type': 'cg', 'pc_type': 'bjacobi', 'sub_pc_type': 'ilu'}
-vrt_eqn = etan*qn*dx + fd.inner(perp(fd.grad(etan)), un)*dx
+vrt_eqn = eta*q_*dx + fd.inner(perp(fd.grad(eta)), un)*dx
 vort_problem = fd.LinearVariationalProblem(fd.lhs(vrt_eqn), fd.rhs(vrt_eqn), vortn, constant_jacobian=True)
 vortsolver = fd.LinearVariationalSolver(vort_problem, solver_parameters=cg_prms)
 
