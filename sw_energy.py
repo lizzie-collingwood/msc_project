@@ -282,7 +282,7 @@ vort_problem = fd.LinearVariationalProblem(fd.lhs(vrt_eqn), fd.rhs(vrt_eqn), vor
 vortsolver = fd.LinearVariationalSolver(vort_problem, solver_parameters=cg_prms)
 
 # Compute geostrophic balance error
-gbal_eqn = (g*fd.grad(Dh+b) + f*fd.perp(uh))*dx
+gbal_eqn = (g*fd.grad(Dh+b) + f*fd.perp(F1/Dh))*dx
 gbal0 = fd.assemble(gbal_eqn)
 
 # Write initial fields into a file which can be interpreted by software ParaView
