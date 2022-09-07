@@ -272,6 +272,13 @@ qsolver = fd.LinearVariationalSolver(vprob,
 Q = Dh*qn*dx
 Z = Dh*qn**2*dx
 
+# Vorticity
+vortn = fd.Function(V0, name='Relative Vorticity')
+cg_prms = {'ksp_type': 'cg', 'pc_type': 'bjacobi', 'sub_pc_type': 'ilu'}
+vrt_eqn = etan*qn*dx + fd.inner(perp(fd.grad(etan)), un)*dx
+vort_problem = fd.LinearVariationalProblem(fd.lhs(vrt_eqn), fd.rhs(vrt_eqn), vortn, constant_jacobian=True)
+vortsolver = fd.LinearVariationalSolver(vort_problem, solver_parameters=cg_prms)
+
 # Compute geostrophic balance error
 gbal_eqn = (g*fd.grad(D0+b) + f*fd.perp(u0))*dx
 gbal0 = fd.assemble(gbal_eqn)
@@ -288,7 +295,8 @@ simdata = {t: [fd.assemble(mass), energy0, fd.assemble(Q), fd.assemble(Z), 0, 0,
 un.assign(u0)
 qsolver.solve()
 F0.project(u0*D0)
-file_sw.write(un, etan, qn)
+vortsolver.solve()
+file_sw.write(un, etan, qn, vortn)
 Unp1.assign(Un)
 
 PETSc.Sys.Print('tmax', tmax, 'dt', dt)
@@ -311,6 +319,7 @@ while t < tmax + 0.5*dt:
 
     # Compute and print quantities that should be conserved
     qsolver.solve()
+    vortn.solve()
 
     _mass = fd.assemble(mass)
     _energy = fd.assemble(energy)
@@ -330,7 +339,7 @@ while t < tmax + 0.5*dt:
     if tdump > dumpt - dt*0.5:
         etan.assign(D0 - H + b)
         un.assign(u0)
-        file_sw.write(un, etan, qn)
+        file_sw.write(un, etan, qn, vortn)
         tdump -= dumpt
 
     itcount += its
