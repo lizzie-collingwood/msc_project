@@ -23,6 +23,7 @@ parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', c
 parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
+parser.add_argument('--ksp_maxit', type=str, default=1e-8, help='Max iterations for linear solver.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
 parser.add_argument("--courant_mesh", type=lambda x: bool(strtobool(x)), nargs='?', const=False, default=False, help='Constructs a pvd of Courant number')
 args = parser.parse_known_args()
@@ -188,12 +189,13 @@ mg_parameters = {
     "snes_stol": 1e-50,
     "ksp_atol": args.atol, # conv test: measure of the absolute size of the residual norm
     "ksp_rtol": args.rtol, # conv test: the decrease of the residual norm relative to the norm of the right hand side
-    "ksp_max_it": 40, # cap the number of iterations
+    "ksp_max_it": args.ksp_maxit, # cap the number of iterations
     "pc_type": "mg", # precontitioning method - geometric multigrid preconditioner (Newton-Krylov-multigrid method)
     "pc_mg_cycle_type": "v", # V-cycle
     "pc_mg_type": "multiplicative", # one of additive multiplicative full cascade
     "mg_levels_ksp_type": "gmres", # linear solver for the mg levels
-    "mg_levels_ksp_max_it": 5, # max iterations for the levels of multigrid
+    "mg_levels_ksp_max_it": 2, # max iterations for the levels of multigrid
+    # "mg_levels_ksp_max_it": 5, # max iterations for the levels of multigrid
     "mg_levels_pc_type": "python", #
     "mg_levels_pc_python_type": "firedrake.PatchPC", #
     "mg_levels_patch_pc_patch_save_operators": True, #
