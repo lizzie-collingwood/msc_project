@@ -23,7 +23,7 @@ parser.add_argument("--poisson", type=lambda x: bool(strtobool(x)), nargs='?', c
 parser.add_argument('--snes_rtol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--atol', type=str, default=1e-8, help='The absolute size of the residual norm which is used as stopping criterion for Newton iterations.')
 parser.add_argument('--rtol', type=str, default=1e-8, help='The relative size of the residual norm which is used as stopping criterion for Newton iterations.')
-parser.add_argument('--ksp_maxit', type=str, default=1e-8, help='Max iterations for linear solver.')
+parser.add_argument('--ksp_maxit', type=str, default=40, help='Max iterations for linear solver.')
 parser.add_argument('--show_args', action='store_true', help='Output all the arguments.')
 parser.add_argument("--courant_mesh", type=lambda x: bool(strtobool(x)), nargs='?', const=False, default=False, help='Constructs a pvd of Courant number')
 args = parser.parse_known_args()
