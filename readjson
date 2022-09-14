@@ -18,7 +18,8 @@ class AnalyseJson:
         4: {'ylab': 'Total enstrophy'},
         5: {'ylab': 'Linear iterations'},
         6: {'ylab': 'Nonlinear iterations'},
-        7: {'ylab': 'Execution time'}}
+        7: {'ylab': 'Execution time'},
+        8: {'ylab': 'Geostrophic balance error'}}
     leg_dict = {
         'poisson': {'rename': '', 'options': {'True': 'PI', 'False': 'IMR', 'Picard': 'Picard'}},
         'upwind': {'rename': '', 'options': {'True': 'Upwind', 'False': 'Average'}},
@@ -29,7 +30,7 @@ class AnalyseJson:
         'softsign': {'rename': '$a$ ='},
         'ref_level': {'rename': 'Resolution'}
     }
-    ignore_dict = ['base_level', 'dt']
+    ignore_dict = ['base_level', 'dt', 'maxk']
 
     def __init__(self, file=None):
         if file is not None:
@@ -96,7 +97,7 @@ class AnalyseJson:
         """Normalise the data slice according to the initial value."""
         return (slice - slice[0]) / slice[0]
 
-    def multiplot(self, normalise=False, semilog=False, cumsum=False, cmap='viridis', sawtooth=False, colnum=1, lw=1, **kwargs):
+    def multiplot(self, normalise=False, semilog=False, cumsum=False, cmap='viridis', sawtooth=False, root=False, colnum=1, lw=1, **kwargs):
         """
         Plot multiple json file data.
         :param kwargs: any number of strings describing path to json files.
@@ -112,7 +113,7 @@ class AnalyseJson:
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
         # labels = ['ASM-MG','Picard, $k=4$','Picard, $k=8$','Picard, $k=16$']
         # labels = ['Standard IMR','Almost-Poisson IMR','ASM-MG PI','Picard PI']
-        labels = ['Original', 'Simplified']
+        # labels = ['Original', 'Simplified']
 
         # Plot the json data
         plt.figure()
@@ -125,6 +126,7 @@ class AnalyseJson:
                 r = int(24/ops['dt'][i])
                 xx = np.r_['1,2', xx[:r], xx[r::r]][0]
                 column = np.r_['1,2',column[:r], column[r::r]][0]
+            if root: column = np.sqrt(column)
             if semilog: plt.semilogy(xx, np.abs(column), label=labels[i], color=colours[i], lw=lw)
             else: plt.plot(xx, column, label=labels[i], color=colours[i])
             
@@ -135,7 +137,8 @@ class AnalyseJson:
 
         # Xtick labels + legend
         dmax = max(ops['dmax'])
-        plt.xticks(np.arange(dmax+1))
+        plt.ylim([1e-16,1e-8])
+        plt.xticks(np.arange(0,dmax+1,5))
         if len(kwargs)>1: plt.legend(loc='lower right')
         plt.show()
 
@@ -147,7 +150,7 @@ class AnalyseJson:
         arrs, ops = self.extract(kwargs)
         labels = self.find_test_parameters(self.leg_dict, ops, self.ignore_dict)
         cols = [5, 6, 7]
-        labels = ['Original', 'Simplified']
+        # labels = ['Original', 'Simplified']
         
         # Extract and compute relevant performance measures.
         totdata = {}
@@ -208,7 +211,7 @@ class AnalyseJson:
         plt.figure()
         plt.plot(xx, yy, color=colours[-1], label='True scaling')
         zz = [256 / i for i in xx]
-        plt.plot(xx, zz, color=colours[0], label='Weak scaling', linestyle = 'dashed')
+        plt.plot(xx, zz, color=colours[0], label='Fixed Courant number scaling', linestyle = 'dashed')
         plt.semilogx(base=2)
         plt.semilogy(base=2)
         plt.xlabel('Resolution')
@@ -258,6 +261,20 @@ f35 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/a10/w5au
 f36 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/PI/upwind/w5aug.json'
 f37 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/degree2/w5aug.json'
 f38 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/PI/upwind/elimD1/w5aug.json'
+f39 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/Pic/w5aug.json'
+f40 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/Pic/maxk8/w5aug.json'
+f41 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/PI/upwind/coordsdegree2/w5aug.json'
+f42 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref5/sw_im/IMR/w5aug.json'
+f43 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref3/Pic/w5aug.json'
+f44 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/ref4/NEW/w5aug.json'
+f45 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref4/Pic/w5aug.json'
+f46 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref4/ASM/w5aug.json'
+f47 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref5/Pic/w5aug.json'
+f48 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref5/ASM/w5aug.json'
+f49 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref6/Pic/w5aug.json'
+f50 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref6/ASM/w5aug.json'
+f51 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref6/ASM/atol/w5aug.json'
+f52 = '/Users/lizziecollingwood/MSc./proj/simulations/w5/timings/ref5/ASM/atol/w5aug.json'
 
 # Initialise class and implement method
 aj = AnalyseJson()
@@ -274,24 +291,52 @@ aj = AnalyseJson()
 # aj.multiplot(j3=f20, j1=f35, j5=f27, j2=f29, colnum=4, normalise=True, sawtooth=True, semilog=True, cmap='coolwarm')
 
 # ======= Ref4
+# aj.multiplot(j3=f44, colnum=8, lw=1, normalise=True, semilog=True, root=True, cmap='coolwarm') # GBAL
+
 # aj.multiplot(j1=f20, j2=f21, j3=f22, j4=f23, colnum=2, normalise=True, semilog=True, cmap='coolwarm') # upwind vs avg; IMR vs PI
 # aj.multiplot(j1=f20, j2=f37, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.perinf(j1=f22, j2=f20, j3=f32, j4=f30) # PI v IMR v Pic
 # aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=2, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=4, normalise=True,  sawtooth=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j3=f20, j4=f28, j5=f32, j6=f31, colnum=3, lw=0.6, normalise=True, sawtooth=True, semilog=True, cmap='winter') # PI v Pic 4,8,16
-# aj.multiplot(j3=f20, j4=f28, j5=f32, j6=f31, colnum=2, lw=0.6, normalise=True, semilog=True, cmap='winter') # PI v Pic 4,8,16
-# aj.perinf(j4=f30, j1=f22, j2=f20, j3=f32) # PI v Pic 4,8,16
+
+# aj.multiplot(j3=f20, j4=f28, j5=f32, j6=f31, j1=f15, j2=f39, colnum=3, lw=0.6, normalise=True, semilog=True, cmap='gist_earth') # PI v Pic 4,8,16
+
+# aj.perinf(j4=f30, j1=f22, j2=f20, j3=f32, j9=f31, j5=f28) # PI v Pic 4,8,16
 # aj.multiplot(j4=f30, j1=f22, j2=f20, j3=f32, colnum=7, cmap='coolwarm')
+# aj.multiplot(j4=f20, j1=f37, j3=f41, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm') # COORDS DEGREE, DEGREE
+# aj.perinf(j4=f20, j1=f37, j3=f41) # COORDS DEGREE, DEGREE
 
 # ======= Ref5
-# aj.multiplot(j1=f15, j2=f13, j3=f16, j4=f14, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f42, j2=f16, j3=f39, j4=f40, j5=f15, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='rainbow')
+# aj.multiplot(j1=f42, j2=f16, j3=f39, j4=f40, j5=f15, colnum=3, sawtooth=False, normalise=True, semilog=True, cmap='rainbow')
+# aj.multiplot(j1=f42, j2=f16, j3=f39, j4=f40, j5=f15, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='rainbow')
+
+
+# aj.multiplot(j1=f40, j2=f15, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f32, j2=f7, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f43, j2=f36, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm')
+
+cmap = 'gist_earth'
+# aj.multiplot(j1=f42, j2=f16, j3=f39, j4=f40, j5=f15, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap=cmap)
+# aj.multiplot(j1=f42, j2=f16, j3=f39, j4=f40, j5=f15, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap=cmap)
+# aj.perinf(j1=f42, j2=f16, j3=f39, j4=f40, j5=f15)
+
 # aj.multiplot(j3=f13, j2=f1, colnum=4, sawtooth=True, normalise=True, semilog=True, cmap='coolwarm')
 # aj.multiplot(j3=f13, j2=f15, colnum=4, sawtooth=True, normalise=False, semilog=False, cmap='coolwarm')
-aj.multiplot(j1=f15, j2=f38, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm') # elim D1
-aj.perinf(j3=f15, j2=f38) # elim D1
+# aj.multiplot(j1=f15, j2=f38, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm') # elim D1
+# aj.multiplot(j1=f15, j2=f39, j3=f40, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm') # pic
+# aj.perinf(j3=f15, j2=f38) # elim D1
 # aj.perinf(j3=f15, j2=f16) # IMR v PI
 # aj.perinf(j3=f15, j2=f13) # upwind v avg
+# aj.perinf(j1=f15, j3=f40) # upwind v avg
+
+
+# aj.multiplot(j1=f45, colnum=2, sawtooth=False, normalise=True, semilog=True, cmap='coolwarm')
+# aj.multiplot(j1=f45, j2=f46, j3=f47, j4=f48, j5=f49, j6=f50, colnum=2, sawtooth=False, normalise=False, semilog=False, cmap='gist_earth')
+# aj.multiplot(j4=f48, j6=f50, j7=f51, j8=f52, colnum=2, sawtooth=False, normalise=False, semilog=False, cmap='gist_earth')
+# aj.perinf(j1=f45, j2=f46, j3=f47, j4=f48, j5=f49, j6=f50)
+# aj.perinf(j4=f48, j6=f50, j7=f51, j8=f52)
 
 # ======= Ref3 vs Ref4 vs Ref5 vs Ref6
 # aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=2, lw=0.5, normalise=True, semilog=True, cmap='ocean')
@@ -299,6 +344,12 @@ aj.perinf(j3=f15, j2=f38) # elim D1
 # df = aj.perinf(j0=f36, j1=f20, j2=f15, j3=f34)
 # aj.plotperformance(df)
 # aj.multiplot(j0=f36, j1=f20, j2=f15, j3=f34, colnum=7, cmap='coolwarm')
+
+# ======= Picard res 345 vs ASMMG
+aj.multiplot(j0=f43, j1=f36, colnum=2, lw=1, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j2=f32, j3=f20, colnum=2, lw=1, normalise=True, semilog=True, cmap='coolwarm')
+aj.multiplot(j4=f40, j5=f15, colnum=2, lw=1, normalise=True, semilog=True, cmap='coolwarm')
+# aj.perinf(j0=f43, j1=f36, j2=f32, j3=f20, j4=f40, j5=f15)
 
 # ======= Picard vs IMR vs PI
 # aj.multiplot(j1=f1a, j2=f2, j4=f17a, j5=f17b, colnum=2, normalise=True, semilog=True, cmap='coolwarm')

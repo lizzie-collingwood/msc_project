@@ -353,7 +353,7 @@ while t < tmax - 0.5*dt:
     qsolver.solve()
     q2Dn.project(qn**2*Dn)
     vortsolver.solve()
-    eta_out.interpolate(Dn + b) 
+    eta_out.interpolate(Dn + b)
 
     simdata.update({t: [_mass, _energy, _Q, _Z, its, nonlin_its, extime]})
 
